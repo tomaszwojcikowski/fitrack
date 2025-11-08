@@ -238,14 +238,6 @@ class FiTrackApp {
             this.showWorkout();
         });
 
-        document.getElementById('closeProgramModal').addEventListener('click', () => {
-            this.closeProgramModal();
-        });
-
-        document.getElementById('quitProgramBtn').addEventListener('click', () => {
-            this.quitProgram();
-        });
-
         document.getElementById('prevDayBtn').addEventListener('click', () => {
             this.navigateProgram(-1);
         });
@@ -765,11 +757,19 @@ class FiTrackApp {
                     <span><strong>${program.daysPerWeek}</strong> days/week</span>
                     <span><strong>${program.goal}</strong></span>
                 </div>
-                <button class="btn btn-primary" onclick="app.startProgram('${program.id}')">
+                <button class="btn btn-primary start-program-btn" data-program-id="${program.id}">
                     Start Program
                 </button>
             </div>
         `).join('');
+
+        // Attach event listeners
+        container.querySelectorAll('.start-program-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const programId = e.target.getAttribute('data-program-id');
+                this.startProgram(programId);
+            });
+        });
     }
 
     async startProgram(programId) {
@@ -942,6 +942,8 @@ let app;
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         app = new FiTrackApp();
+        // Make app accessible globally for inline event handlers
+        window.app = app;
     });
 }
 
