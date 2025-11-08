@@ -141,3 +141,6 @@ const EXERCISES = [
 
 // Sort exercises alphabetically
 EXERCISES.sort((a, b) => a.name.localeCompare(b.name));
+
+// Export for testing
+export { EXERCISES };
