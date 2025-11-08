@@ -104,6 +104,35 @@ All your data is stored locally in your browser. No data is sent to any server. 
 - Web Audio API for timer sounds
 - Responsive CSS Grid and Flexbox layouts
 
+## Development
+
+### Running Tests
+
+The project includes a comprehensive test suite that runs in less than 10 seconds:
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
+```
+
+The test suite covers all major features including:
+- Exercise database validation
+- Workout tracking functionality
+- Rest timer operations
+- Data persistence
+- UI state management
+
+See [tests/README.md](tests/README.md) for more details.
+
 ## Deployment
 
 This application is automatically deployed to GitHub Pages when changes are pushed to the main branch. The deployment is handled by GitHub Actions.

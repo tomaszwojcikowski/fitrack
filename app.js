@@ -439,7 +439,13 @@ class FiTrackApp {
 
     playTimerSound() {
         try {
-            this.timerSound.play();
+            const playPromise = this.timerSound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    // Silent fail if sound doesn't play
+                    console.log('Timer sound could not play');
+                });
+            }
         } catch (e) {
             // Silent fail if sound doesn't play
             console.log('Timer sound could not play');
@@ -501,6 +507,14 @@ class FiTrackApp {
 
 // Initialize app
 let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new FiTrackApp();
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        app = new FiTrackApp();
+    });
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { FiTrackApp };
+}
+export { FiTrackApp };
