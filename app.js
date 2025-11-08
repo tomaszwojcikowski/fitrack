@@ -747,23 +747,56 @@ class FiTrackApp {
     renderPrograms() {
         const container = document.getElementById('programsContent');
         
-        container.innerHTML = this.programs.map(program => `
-            <div class="program-card">
-                <div class="program-header">
-                    <h3>${program.name}</h3>
-                    <span class="program-badge program-badge-${program.difficulty.toLowerCase()}">${program.difficulty}</span>
+        container.innerHTML = this.programs.map(program => {
+            // Build blocks info for advanced programs
+            let blocksInfo = '';
+            if (program.blocks && program.blocks.length > 0) {
+                blocksInfo = `
+                    <div class="program-blocks">
+                        <strong>${program.blocks.length} Training Blocks:</strong>
+                        ${program.blocks.map(block => `
+                            <div class="block-item">
+                                <span class="block-name">Block ${block.blockNumber}: ${block.name}</span>
+                                <span class="block-weeks">(Weeks ${block.weeks[0]}-${block.weeks[block.weeks.length - 1]})</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Add author/philosophy info if available
+            let extraInfo = '';
+            if (program.philosophy) {
+                extraInfo = `<p class="program-philosophy"><em>${program.philosophy}</em></p>`;
+            }
+            if (program.targetAudience) {
+                extraInfo += `<p class="program-audience"><strong>Target:</strong> ${program.targetAudience}</p>`;
+            }
+
+            return `
+                <div class="program-card">
+                    <div class="program-header">
+                        <h3>${program.name}</h3>
+                        <span class="program-badge program-badge-${program.difficulty.toLowerCase()}">${program.difficulty}</span>
+                    </div>
+                    <p class="program-description">${program.description}</p>
+                    ${extraInfo}
+                    <div class="program-meta">
+                        <span><strong>${program.duration}</strong> weeks</span>
+                        <span><strong>${program.daysPerWeek}</strong> days/week</span>
+                        <span><strong>${program.goal}</strong></span>
+                    </div>
+                    ${blocksInfo}
+                    <div class="program-actions">
+                        ${program.blocks && program.blocks.length > 0 ? 
+                            `<button class="btn btn-outline view-details-btn" data-program-id="${program.id}">View Details</button>` : ''}
+                        <button class="btn btn-primary start-program-btn" data-program-id="${program.id}">
+                            Start Program
+                        </button>
+                    </div>
                 </div>
-                <p class="program-description">${program.description}</p>
-                <div class="program-meta">
-                    <span><strong>${program.duration}</strong> weeks</span>
-                    <span><strong>${program.daysPerWeek}</strong> days/week</span>
-                    <span><strong>${program.goal}</strong></span>
-                </div>
-                <button class="btn btn-primary start-program-btn" data-program-id="${program.id}">
-                    Start Program
-                </button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Attach event listeners
         container.querySelectorAll('.start-program-btn').forEach(btn => {
@@ -772,6 +805,93 @@ class FiTrackApp {
                 this.startProgram(programId);
             });
         });
+
+        container.querySelectorAll('.view-details-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const programId = e.target.getAttribute('data-program-id');
+                this.showProgramDetails(programId);
+            });
+        });
+    }
+
+    showProgramDetails(programId) {
+        const program = this.getProgramById(programId);
+        if (!program) return;
+
+        // Create a modal/overlay to show program details
+        const modal = document.createElement('div');
+        modal.className = 'program-details-modal';
+        modal.innerHTML = `
+            <div class="program-details-content">
+                <div class="program-details-header">
+                    <h2>${program.name}</h2>
+                    <button class="close-btn" aria-label="Close details">&times;</button>
+                </div>
+                <div class="program-details-body">
+                    <p class="program-description">${program.description}</p>
+                    
+                    ${program.philosophy ? `
+                        <div class="details-section">
+                            <h3>Philosophy</h3>
+                            <p>${program.philosophy}</p>
+                        </div>
+                    ` : ''}
+
+                    ${program.blocks && program.blocks.length > 0 ? `
+                        <div class="details-section">
+                            <h3>Training Blocks</h3>
+                            ${program.blocks.map(block => `
+                                <div class="block-details">
+                                    <h4>Block ${block.blockNumber}: ${block.name} (Weeks ${block.weeks[0]}-${block.weeks[block.weeks.length - 1]})</h4>
+                                    <p><strong>Goals:</strong> ${block.goals}</p>
+                                    <div class="block-skills">
+                                        <div><strong>Skill A:</strong> ${block.skillA.name} - ${block.skillA.description}</div>
+                                        <div><strong>Skill B:</strong> ${block.skillB.name} - ${block.skillB.description}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="details-section">
+                        <h3>Program Overview</h3>
+                        <ul>
+                            <li><strong>Duration:</strong> ${program.duration} weeks</li>
+                            <li><strong>Frequency:</strong> ${program.daysPerWeek} days per week</li>
+                            <li><strong>Difficulty:</strong> ${program.difficulty}</li>
+                            <li><strong>Goal:</strong> ${program.goal}</li>
+                            ${program.targetAudience ? `<li><strong>Target Audience:</strong> ${program.targetAudience}</li>` : ''}
+                        </ul>
+                    </div>
+                </div>
+                <div class="program-details-footer">
+                    <button class="btn btn-secondary close-details-btn">Close</button>
+                    <button class="btn btn-primary start-program-from-details-btn" data-program-id="${program.id}">Start Program</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Add event listeners for modal
+        const closeModal = () => {
+            modal.classList.add('fade-out');
+            setTimeout(() => document.body.removeChild(modal), 300);
+        };
+
+        modal.querySelector('.close-btn').addEventListener('click', closeModal);
+        modal.querySelector('.close-details-btn').addEventListener('click', closeModal);
+        modal.querySelector('.start-program-from-details-btn').addEventListener('click', () => {
+            const programId = modal.querySelector('.start-program-from-details-btn').getAttribute('data-program-id');
+            closeModal();
+            this.startProgram(programId);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Animate in
+        setTimeout(() => modal.classList.add('show'), 10);
     }
 
     async startProgram(programId) {
@@ -822,8 +942,38 @@ class FiTrackApp {
         const day = week.days.find(d => d.day === this.activeProgram.currentDay);
         if (!day) return;
 
+        // Store phase information for advanced programs
+        this.currentDayPhases = day.phases || null;
+        this.currentDayWorkoutType = day.workoutType || null;
+
+        // Handle both old format (day.exercises) and new format (day.phases with exerciseGroups)
+        let exercisesToLoad = [];
+        
+        if (day.exercises) {
+            // Old format: simple exercises array
+            exercisesToLoad = day.exercises;
+        } else if (day.phases) {
+            // New format: phases with exercise groups
+            day.phases.forEach(phase => {
+                if (phase.exerciseGroups) {
+                    phase.exerciseGroups.forEach(group => {
+                        if (group.exercises) {
+                            group.exercises.forEach(exercise => {
+                                exercisesToLoad.push({
+                                    ...exercise,
+                                    groupLabel: group.label,
+                                    groupType: group.type,
+                                    phase: phase.phase
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
         // Clear current workout and load program workout
-        this.currentWorkout = day.exercises.map(exercise => {
+        this.currentWorkout = exercisesToLoad.map(exercise => {
             // Find exercise in database
             const dbExercise = EXERCISES.find(ex => 
                 ex.name.toLowerCase() === exercise.name.toLowerCase()
@@ -831,15 +981,17 @@ class FiTrackApp {
 
             // Create sets based on program prescription
             const sets = [];
-            for (let i = 0; i < exercise.sets; i++) {
+            const numSets = exercise.sets || 1;
+            for (let i = 0; i < numSets; i++) {
                 const set = {
                     reps: exercise.reps ? exercise.reps.toString() : '',
-                    weight: '',
+                    weight: exercise.weight || '',
                     time: exercise.time || '',
                     useTime: !!exercise.time,
                     completed: false,
                     prescribedReps: exercise.reps,
-                    prescribedRestSeconds: exercise.restSeconds
+                    prescribedRestSeconds: exercise.restSeconds,
+                    prescribedWeight: exercise.weight
                 };
                 sets.push(set);
             }
@@ -850,7 +1002,11 @@ class FiTrackApp {
                 equipment: dbExercise?.equipment || 'Other',
                 sets: sets,
                 notes: exercise.notes,
-                restSeconds: exercise.restSeconds
+                restSeconds: exercise.restSeconds,
+                groupLabel: exercise.groupLabel,
+                groupType: exercise.groupType,
+                phase: exercise.phase,
+                scheme: exercise.scheme  // For special set schemes like EMOM, Ladder, etc.
             };
         });
 
