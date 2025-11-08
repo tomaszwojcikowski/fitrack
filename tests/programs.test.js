@@ -111,8 +111,8 @@ describe('Workout Programs', () => {
   })
 
   describe('Program Navigation', () => {
-    beforeEach(() => {
-      app.startProgram('beginner-strength')
+    beforeEach(async () => {
+      await app.startProgram('beginner-strength')
     })
 
     it('should navigate to next day', () => {
