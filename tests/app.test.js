@@ -83,11 +83,14 @@ describe('FiTrackApp', () => {
       expect(app.currentWorkout).toHaveLength(1)
     })
 
-    it('should remove exercise from workout', () => {
+    it('should remove exercise from workout', async () => {
       app.addExercise(EXERCISES[0])
       app.addExercise(EXERCISES[1])
       
-      app.removeExercise(0)
+      // Mock showConfirm to auto-confirm
+      app.showConfirm = async () => true
+      
+      await app.removeExercise(0)
       expect(app.currentWorkout).toHaveLength(1)
       expect(app.currentWorkout[0].name).toBe(EXERCISES[1].name)
     })
@@ -262,12 +265,12 @@ describe('FiTrackApp', () => {
       expect(app.workoutHistory[0].exercises).toHaveLength(2)
     })
 
-    it('should finish workout and optionally clear', () => {
+    it('should finish workout and optionally clear', async () => {
       app.addExercise(EXERCISES[0])
-      global.confirm = vi.fn(() => true)
-      global.alert = vi.fn()
+      // Mock showConfirm to return true (user wants to clear)
+      app.showConfirm = async () => true
       
-      app.finishWorkout()
+      await app.finishWorkout()
       
       expect(app.currentWorkout).toHaveLength(0)
       expect(app.workoutHistory).toHaveLength(1)
@@ -329,18 +332,25 @@ describe('FiTrackApp', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle removing non-existent exercise', () => {
-      expect(() => app.removeExercise(0)).not.toThrow()
+    it('should handle removing non-existent exercise', async () => {
+      // Mock showConfirm
+      app.showConfirm = async () => true
+      
+      // Should not throw even with empty workout
+      await expect(app.removeExercise(0)).resolves.not.toThrow()
     })
 
     it('should handle adding set to non-existent exercise', () => {
       expect(() => app.addSet(999)).toThrow()
     })
 
-    it('should handle empty workout finish', () => {
-      global.alert = vi.fn()
-      app.finishWorkout()
-      expect(global.alert).toHaveBeenCalledWith('No exercises to save!')
+    it('should handle empty workout finish', async () => {
+      // Mock showToast to track calls
+      const showToastSpy = vi.fn()
+      app.showToast = showToastSpy
+      
+      await app.finishWorkout()
+      expect(showToastSpy).toHaveBeenCalledWith('No exercises to save!', 'warning')
     })
 
     it('should handle timer sound play failure', async () => {
