@@ -74,8 +74,8 @@ describe('Workout Programs', () => {
       expect(app.activeProgram.completedDays).toEqual([])
     })
 
-    it('should load program workout when starting', () => {
-      app.startProgram('beginner-strength')
+    it('should load program workout when starting', async () => {
+      await app.startProgram('beginner-strength')
       
       expect(app.currentWorkout.length).toBeGreaterThan(0)
       // First day of Beginner Strength Builder has 5 exercises
