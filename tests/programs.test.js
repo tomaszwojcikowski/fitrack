@@ -170,8 +170,8 @@ describe('Workout Programs', () => {
   })
 
   describe('Program Persistence', () => {
-    it('should save active program to localStorage', () => {
-      app.startProgram('beginner-strength')
+    it('should save active program to localStorage', async () => {
+      await app.startProgram('beginner-strength')
       app.saveData()
       
       const saved = localStorage.getItem('fitrack_data')
