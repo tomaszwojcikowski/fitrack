@@ -259,7 +259,7 @@ describe('Workout Programs', () => {
       const plankExercise = app.currentWorkout.find(ex => ex.name === 'Plank')
       expect(plankExercise).toBeDefined()
       expect(plankExercise.sets[0].useTime).toBe(true)
-      expect(plankExercise.sets[0].time).toBe('60s')
+      expect(plankExercise.sets[0].time).toBe('60') // Time should be parsed without 's' suffix
     })
   })
 

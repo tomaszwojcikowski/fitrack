@@ -306,7 +306,7 @@ body {
 
 .set-row {
     display: grid;
-    grid-template-columns: 30px 1fr 1fr 40px;
+    grid-template-columns: 30px 1fr 1fr auto;
     gap: 0.5rem;
     align-items: end;
 }
@@ -404,6 +404,40 @@ body {
     color: white;
 }
 
+.set-actions {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.set-move-btn,
+.set-delete-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--text-secondary);
+}
+
+.set-move-btn:hover {
+    background: var(--hover-bg);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.set-delete-btn:hover {
+    background: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
 .add-set-btn {
     width: 100%;
     padding: 0.75rem;
@@ -428,32 +462,6 @@ body {
 
 .add-set-btn:active {
     background: var(--border-color);
-}
-
-.add-exercise-btn {
-    width: 100%;
-    padding: 0.75rem;
-    background: var(--primary-color);
-    border: none;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.add-exercise-btn:hover {
-    background: var(--primary-dark);
-}
-
-.add-exercise-btn:active {
-    transform: scale(0.98);
 }
 
 /* Finish Workout */
@@ -1060,16 +1068,37 @@ input:focus-visible {
 }
 
 .program-card {
-    background: white;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .program-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
+}
+
+.program-card-active {
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.program-active-badge {
+    position: absolute;
+    top: -10px;
+    right: 1rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .program-header {
@@ -1082,7 +1111,7 @@ input:focus-visible {
 
 .program-header h3 {
     font-size: 1.25rem;
-    color: var(--text-color);
+    color: var(--text-primary);
     margin: 0;
     flex: 1;
 }
@@ -1131,7 +1160,7 @@ input:focus-visible {
 }
 
 .program-meta strong {
-    color: var(--text-color);
+    color: var(--text-primary);
     font-weight: 600;
 }
 
