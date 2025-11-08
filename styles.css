@@ -227,8 +227,20 @@ body {
 .empty-state {
     text-align: center;
     color: var(--text-secondary);
-    padding: 2rem 1rem;
+    padding: 3rem 1.5rem;
     font-style: italic;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    margin-top: 1rem;
+}
+
+.empty-state::before {
+    content: "💪";
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
 }
 
 .exercise-card {
@@ -345,11 +357,17 @@ body {
     background: var(--input-bg);
     color: var(--text-primary);
     width: 100%;
+    transition: border-color 0.2s, background 0.2s;
 }
 
 .set-input input:focus {
     outline: none;
     border-color: var(--primary-color);
+    background: var(--card-bg);
+}
+
+.set-input input:invalid {
+    border-color: var(--danger-color);
 }
 
 .set-complete {

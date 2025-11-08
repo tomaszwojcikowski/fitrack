@@ -17,6 +17,18 @@ class FiTrackApp {
         this.setupEventListeners();
         this.setTodayDate();
         this.updateUI();
+        this.showWelcomeTooltip();
+    }
+
+    showWelcomeTooltip() {
+        // Only show welcome tip if this is first time user
+        const hasSeenWelcome = localStorage.getItem('fitrack_welcome_seen');
+        if (!hasSeenWelcome && this.currentWorkout.length === 0) {
+            setTimeout(() => {
+                this.showToast('👋 Welcome to FiTrack! Start by searching for an exercise above.', 'info');
+                localStorage.setItem('fitrack_welcome_seen', 'true');
+            }, 500);
+        }
     }
 
     // Toast Notifications
@@ -419,11 +431,15 @@ class FiTrackApp {
                         <div class="set-row">
                             <div class="set-number">${setIndex + 1}</div>
                             <div class="set-input">
-                                <label>Weight</label>
+                                <label>Weight (kg)</label>
                                 <input type="number" 
                                     value="${set.weight}" 
                                     placeholder="0"
                                     step="0.5"
+                                    min="0"
+                                    max="999"
+                                    inputmode="decimal"
+                                    aria-label="Weight in kilograms"
                                     onchange="app.updateSet(${exIndex}, ${setIndex}, 'weight', this.value)">
                             </div>
                             <div class="set-input">
@@ -442,10 +458,16 @@ class FiTrackApp {
                                     `<input type="text" 
                                         value="${set.time}" 
                                         placeholder="0:00"
+                                        pattern="[0-9]{1,2}:[0-5][0-9]"
+                                        aria-label="Time in minutes and seconds"
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'time', this.value)">` :
                                     `<input type="number" 
                                         value="${set.reps}" 
                                         placeholder="0"
+                                        min="0"
+                                        max="999"
+                                        inputmode="numeric"
+                                        aria-label="Number of repetitions"
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'reps', this.value)">`
                                 }
                             </div>
