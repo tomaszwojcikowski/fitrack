@@ -41,22 +41,22 @@ class FiTrackApp {
             
             // Check if we should show welcome section or load program workout
             if (this.activeProgram) {
-                // There's an active program
+                // There's an active program - automatically load current day
                 const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
                 const today = new Date().toISOString().split('T')[0];
                 const lastWorkoutDate = this.workoutHistory.length > 0 ? this.workoutHistory[0].date : null;
                 
-                // Check if current day is completed and it's a new day
-                if (this.activeProgram.completedDays && 
-                    this.activeProgram.completedDays.includes(currentDayKey) && 
-                    lastWorkoutDate && lastWorkoutDate !== today) {
-                    // Show welcome with suggestion to continue to next day
-                    this.showWelcomeWithProgram(true);
-                } else if (this.currentWorkout.length === 0) {
-                    // No workout in progress, load the current program day or show welcome
-                    const hasWorkoutToday = lastWorkoutDate === today;
-                    if (!hasWorkoutToday) {
-                        this.showWelcomeWithProgram(false);
+                // If no current workout, load the program workout automatically
+                if (this.currentWorkout.length === 0) {
+                    // Check if current day is completed and it's a new day
+                    if (this.activeProgram.completedDays && 
+                        this.activeProgram.completedDays.includes(currentDayKey) && 
+                        lastWorkoutDate && lastWorkoutDate !== today) {
+                        // Move to next day automatically
+                        this.navigateToNextUncompletedDay();
+                    } else {
+                        // Load current day workout automatically
+                        this.loadProgramWorkout();
                     }
                 }
             } else if (this.currentWorkout.length === 0) {
@@ -351,8 +351,16 @@ class FiTrackApp {
     // Event Listeners
     setupEventListeners() {
         // Exercise search
-        document.getElementById('exerciseSearch').addEventListener('input', (e) => {
+        const searchInput = document.getElementById('exerciseSearch');
+        searchInput.addEventListener('input', (e) => {
             this.handleSearch(e.target.value);
+        });
+
+        searchInput.addEventListener('focus', () => {
+            // Show suggestions when focused
+            if (searchInput.value === '') {
+                this.showSuggestedExercises();
+            }
         });
 
         document.getElementById('clearSearch').addEventListener('click', () => {
@@ -421,13 +429,13 @@ class FiTrackApp {
             this.showWorkout();
         });
 
-        document.getElementById('prevDayBtn').addEventListener('click', () => {
-            this.navigateProgram(-1);
-        });
-
-        document.getElementById('nextDayBtn').addEventListener('click', () => {
-            this.navigateProgram(1);
-        });
+        // Current workout button
+        const currentWorkoutBtn = document.getElementById('currentWorkoutBtn');
+        if (currentWorkoutBtn) {
+            currentWorkoutBtn.addEventListener('click', () => {
+                this.showWorkout();
+            });
+        }
 
         // Click outside to close exercise list
         document.addEventListener('click', (e) => {
@@ -469,6 +477,7 @@ class FiTrackApp {
         this.renderCurrentExercises();
         this.updateQuickRestButton();
         this.updateProgramIndicator();
+        this.updateCurrentWorkoutButton();
     }
 
     updateQuickRestButton() {
@@ -484,9 +493,22 @@ class FiTrackApp {
         }
     }
 
+    updateCurrentWorkoutButton() {
+        const currentWorkoutBtn = document.getElementById('currentWorkoutBtn');
+        const workoutView = document.getElementById('workoutView');
+        
+        if (!currentWorkoutBtn) return;
+        
+        // Show button if there's a current workout and we're not on the workout view
+        if (this.currentWorkout.length > 0 && !workoutView.classList.contains('active')) {
+            currentWorkoutBtn.classList.remove('hidden');
+        } else {
+            currentWorkoutBtn.classList.add('hidden');
+        }
+    }
+
     updateProgramIndicator() {
         const programIndicator = document.getElementById('programIndicator');
-        const programNav = document.getElementById('programNav');
         const exerciseSelection = document.querySelector('.exercise-selection');
 
         if (this.activeProgram) {
@@ -495,12 +517,27 @@ class FiTrackApp {
                 const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
                 const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
                 
+                // Calculate progress percentage
+                const totalDays = program.weeks.reduce((sum, w) => sum + w.days.length, 0);
+                const completedDays = this.activeProgram.completedDays ? this.activeProgram.completedDays.length : 0;
+                const progressPercent = Math.round((completedDays / totalDays) * 100);
+
                 programIndicator.innerHTML = `
                     <div class="program-indicator-content">
-                        <div class="program-name">${program.name}</div>
+                        <div class="program-name-row">
+                            <div class="program-name">${program.name}</div>
+                            <div class="program-progress-badge" title="${completedDays}/${totalDays} days completed">
+                                ${progressPercent}%
+                            </div>
+                        </div>
                         <div class="program-progress">
-                            Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
-                            ${day ? ` • ${day.name}` : ''}
+                            <button id="selectDayBtn" class="btn-text" title="Select day">
+                                Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
+                                ${day ? ` • ${day.name}` : ''}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     <button id="quitProgramBtn" class="btn-text" title="Quit program">
@@ -511,17 +548,18 @@ class FiTrackApp {
                     </button>
                 `;
                 programIndicator.classList.remove('hidden');
-                programNav.classList.remove('hidden');
                 exerciseSelection.classList.add('hidden');
 
-                // Re-attach event listener
+                // Re-attach event listeners
                 document.getElementById('quitProgramBtn').addEventListener('click', () => {
                     this.quitProgram();
+                });
+                document.getElementById('selectDayBtn').addEventListener('click', () => {
+                    this.showDaySelector();
                 });
             }
         } else {
             programIndicator.classList.add('hidden');
-            programNav.classList.add('hidden');
             exerciseSelection.classList.remove('hidden');
         }
     }
@@ -531,8 +569,8 @@ class FiTrackApp {
         const exerciseList = document.getElementById('exerciseList');
         
         if (query.length === 0) {
-            exerciseList.classList.add('hidden');
-            exerciseList.innerHTML = '';
+            // Show popular/suggested exercises when search is empty
+            this.showSuggestedExercises();
             return;
         }
 
@@ -543,7 +581,8 @@ class FiTrackApp {
         );
 
         if (filtered.length === 0) {
-            exerciseList.classList.add('hidden');
+            exerciseList.innerHTML = '<div class="no-results">No exercises found. Try a different search term.</div>';
+            exerciseList.classList.remove('hidden');
             return;
         }
 
@@ -563,6 +602,78 @@ class FiTrackApp {
                 this.addExercise(exercise);
             });
         });
+    }
+
+    showSuggestedExercises() {
+        const exerciseList = document.getElementById('exerciseList');
+        
+        // Get recently used exercises from history
+        const recentExercises = this.getRecentlyUsedExercises();
+        
+        // Popular exercises if no history
+        const popularExercises = [
+            'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Overhead Press',
+            'Barbell Row', 'Dumbbell Curl', 'Tricep Pushdown', 'Leg Press', 'Lat Pulldown'
+        ];
+
+        let html = '';
+        
+        if (recentExercises.length > 0) {
+            html += '<div class="exercise-section-header">Recently Used</div>';
+            recentExercises.slice(0, 5).forEach(exName => {
+                const ex = EXERCISES.find(e => e.name === exName);
+                if (ex) {
+                    html += `
+                        <div class="exercise-item" data-exercise='${JSON.stringify(ex)}'>
+                            <strong>${ex.name}</strong>
+                            <small>${ex.category} • ${ex.equipment}</small>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        html += '<div class="exercise-section-header">Popular Exercises</div>';
+        popularExercises.forEach(exName => {
+            const ex = EXERCISES.find(e => e.name === exName);
+            if (ex && !recentExercises.includes(exName)) {
+                html += `
+                    <div class="exercise-item" data-exercise='${JSON.stringify(ex)}'>
+                        <strong>${ex.name}</strong>
+                        <small>${ex.category} • ${ex.equipment}</small>
+                    </div>
+                `;
+            }
+        });
+
+        exerciseList.innerHTML = html;
+        exerciseList.classList.remove('hidden');
+
+        // Add click handlers
+        exerciseList.querySelectorAll('.exercise-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const exercise = JSON.parse(e.currentTarget.getAttribute('data-exercise'));
+                this.addExercise(exercise);
+            });
+        });
+    }
+
+    getRecentlyUsedExercises() {
+        const recentExercises = [];
+        const seen = new Set();
+        
+        // Get exercises from recent workouts
+        for (let i = 0; i < Math.min(5, this.workoutHistory.length); i++) {
+            const workout = this.workoutHistory[i];
+            workout.exercises.forEach(ex => {
+                if (!seen.has(ex.name) && recentExercises.length < 5) {
+                    recentExercises.push(ex.name);
+                    seen.add(ex.name);
+                }
+            });
+        }
+        
+        return recentExercises;
     }
 
     clearSearch() {
@@ -694,7 +805,7 @@ class FiTrackApp {
         const container = document.getElementById('currentExercises');
         
         if (this.currentWorkout.length === 0) {
-            container.innerHTML = '<p class="empty-state">No exercises added yet. Search and select exercises above to start your workout.</p>';
+            container.innerHTML = '<p class="empty-state">No exercises added yet. Search and select exercises below to start your workout.</p>';
             return;
         }
 
@@ -961,6 +1072,7 @@ class FiTrackApp {
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
         this.renderHistory();
+        this.updateCurrentWorkoutButton();
     }
 
     showWorkout() {
@@ -968,6 +1080,7 @@ class FiTrackApp {
         document.getElementById('programsView').classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
         window.location.hash = 'workout';
+        this.updateCurrentWorkoutButton();
     }
 
     renderHistory() {
@@ -1017,6 +1130,7 @@ class FiTrackApp {
         document.getElementById('programsView').classList.add('active');
         window.location.hash = 'programs';
         this.renderPrograms();
+        this.updateCurrentWorkoutButton();
     }
 
     renderPrograms() {
@@ -1382,6 +1496,122 @@ class FiTrackApp {
         if (modal) {
             modal.classList.add('hidden');
         }
+    }
+
+    showDaySelector() {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        const modal = document.getElementById('daySelectorModal');
+        const body = document.getElementById('daySelectorBody');
+        
+        if (!modal || !body) return;
+
+        // Build day selector grid
+        let html = '<div class="day-selector-grid">';
+        
+        program.weeks.forEach(week => {
+            html += `<div class="week-section">
+                <h4>Week ${week.week}</h4>
+                <div class="day-buttons">`;
+            
+            week.days.forEach(day => {
+                const dayKey = `w${week.week}d${day.day}`;
+                const isCompleted = this.activeProgram.completedDays && this.activeProgram.completedDays.includes(dayKey);
+                const isCurrent = week.week === this.activeProgram.currentWeek && day.day === this.activeProgram.currentDay;
+                const classes = `day-btn ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+                
+                html += `
+                    <button class="${classes}" data-week="${week.week}" data-day="${day.day}">
+                        <div class="day-number">Day ${day.day}</div>
+                        <div class="day-name">${day.name}</div>
+                        ${isCompleted ? '<span class="check-mark">✓</span>' : ''}
+                        ${isCurrent ? '<span class="current-mark">▶</span>' : ''}
+                    </button>
+                `;
+            });
+            
+            html += '</div></div>';
+        });
+        
+        html += '</div>';
+        body.innerHTML = html;
+
+        // Add event listeners to day buttons
+        body.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const week = parseInt(btn.getAttribute('data-week'));
+                const day = parseInt(btn.getAttribute('data-day'));
+                this.selectProgramDay(week, day);
+                this.closeDaySelector();
+            });
+        });
+
+        modal.classList.remove('hidden');
+
+        // Add close handler
+        const cancelBtn = document.getElementById('daySelectorCancel');
+        if (cancelBtn) {
+            cancelBtn.onclick = () => this.closeDaySelector();
+        }
+
+        // Close on backdrop click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeDaySelector();
+            }
+        };
+    }
+
+    closeDaySelector() {
+        const modal = document.getElementById('daySelectorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    selectProgramDay(week, day) {
+        if (!this.activeProgram) return;
+
+        // Update current day
+        this.activeProgram.currentWeek = week;
+        this.activeProgram.currentDay = day;
+        
+        // Load the workout for this day
+        this.loadProgramWorkout();
+        this.saveData();
+    }
+
+    navigateToNextUncompletedDay() {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        // Find the next uncompleted day
+        for (let weekNum = this.activeProgram.currentWeek; weekNum <= program.duration; weekNum++) {
+            const week = program.weeks.find(w => w.week === weekNum);
+            if (!week) continue;
+
+            const startDay = (weekNum === this.activeProgram.currentWeek) ? this.activeProgram.currentDay : 1;
+            
+            for (let dayNum = startDay; dayNum <= week.days.length; dayNum++) {
+                const dayKey = `w${weekNum}d${dayNum}`;
+                if (!this.activeProgram.completedDays || !this.activeProgram.completedDays.includes(dayKey)) {
+                    // Found an uncompleted day
+                    this.activeProgram.currentWeek = weekNum;
+                    this.activeProgram.currentDay = dayNum;
+                    this.loadProgramWorkout();
+                    this.saveData();
+                    return;
+                }
+            }
+        }
+
+        // If all days are completed, show congratulations
+        this.showToast('🎉 Congratulations! You\'ve completed the entire program!', 'success');
     }
 }
 

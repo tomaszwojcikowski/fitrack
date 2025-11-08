@@ -287,6 +287,27 @@ body {
     font-size: 0.85rem;
 }
 
+.exercise-section-header {
+    padding: 0.5rem 1rem;
+    background: var(--bg-color);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.no-results {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* Current Exercises */
 .current-exercises {
     display: flex;
@@ -298,11 +319,11 @@ body {
     text-align: center;
     color: var(--text-secondary);
     padding: 3rem 1.5rem;
-    font-style: italic;
     background: var(--card-bg);
     border-radius: 12px;
     border: 2px dashed var(--border-color);
     margin-top: 1rem;
+    position: relative;
 }
 
 .empty-state::before {
@@ -311,6 +332,27 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+}
+
+.empty-state::after {
+    content: "⬇";
+    display: block;
+    font-size: 2rem;
+    margin-top: 1rem;
+    animation: bounce 2s infinite;
+    opacity: 0.6;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
 }
 
 .exercise-card {
@@ -482,8 +524,8 @@ body {
 
 .set-move-btn,
 .set-delete-btn {
-    width: 32px;
-    height: 32px;
+    min-width: 36px;
+    min-height: 36px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--input-bg);
@@ -492,8 +534,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 0.5rem;
     color: var(--text-secondary);
+}
+
+@media (hover: none) {
+    /* Larger touch targets on touch devices */
+    .set-move-btn,
+    .set-delete-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }
 
 .set-move-btn:hover {
@@ -1106,10 +1157,26 @@ input:focus-visible {
     flex: 1;
 }
 
+.program-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
 .program-name {
     font-weight: 600;
     font-size: 1.1rem;
-    margin-bottom: 0.25rem;
+    flex: 1;
+}
+
+.program-progress-badge {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
 }
 
 .program-progress {
@@ -1514,5 +1581,184 @@ input:focus-visible {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.25rem;
+    }
+}
+
+/* Day Selector Modal */
+.day-selector-content {
+    max-width: 700px;
+    max-height: 80vh;
+}
+
+.day-selector-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.day-selector-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.week-section h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.day-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.day-btn {
+    position: relative;
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.day-btn:hover {
+    border-color: var(--primary);
+    background: var(--hover-bg);
+    transform: translateY(-2px);
+}
+
+.day-btn.current {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.day-btn.completed {
+    border-color: var(--success);
+    background: rgba(46, 213, 115, 0.1);
+}
+
+.day-btn.completed.current {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.15), var(--primary-light));
+}
+
+.day-number {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.day-name {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.check-mark {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    color: var(--success);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.current-mark {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    color: var(--primary);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Floating Current Workout Button */
+.floating-workout-btn {
+    position: fixed;
+    bottom: 5rem;
+    right: 1.5rem;
+    z-index: 900;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.floating-workout-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background: var(--primary-dark);
+}
+
+.floating-workout-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.floating-workout-btn.hidden {
+    display: none;
+}
+
+/* Update program indicator to make select button more obvious */
+#selectDayBtn {
+    background: var(--hover-bg);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+#selectDayBtn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#selectDayBtn svg {
+    transition: transform 0.2s ease;
+    opacity: 0.7;
+}
+
+#selectDayBtn:hover svg {
+    transform: translateY(2px);
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .floating-workout-btn {
+        bottom: 4rem;
+        right: 1rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    .day-buttons {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+
+    .day-selector-content {
+        margin: 1rem;
     }
 }
