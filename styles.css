@@ -287,6 +287,27 @@ body {
     font-size: 0.85rem;
 }
 
+.exercise-section-header {
+    padding: 0.5rem 1rem;
+    background: var(--bg-color);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.no-results {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* Current Exercises */
 .current-exercises {
     display: flex;
@@ -298,11 +319,11 @@ body {
     text-align: center;
     color: var(--text-secondary);
     padding: 3rem 1.5rem;
-    font-style: italic;
     background: var(--card-bg);
     border-radius: 12px;
     border: 2px dashed var(--border-color);
     margin-top: 1rem;
+    position: relative;
 }
 
 .empty-state::before {
@@ -311,6 +332,27 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+}
+
+.empty-state::after {
+    content: "⬇";
+    display: block;
+    font-size: 2rem;
+    margin-top: 1rem;
+    animation: bounce 2s infinite;
+    opacity: 0.6;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
 }
 
 .exercise-card {
@@ -482,8 +524,8 @@ body {
 
 .set-move-btn,
 .set-delete-btn {
-    width: 32px;
-    height: 32px;
+    min-width: 36px;
+    min-height: 36px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--input-bg);
@@ -492,8 +534,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    padding: 0.5rem;
     color: var(--text-secondary);
+}
+
+@media (hover: none) {
+    /* Larger touch targets on touch devices */
+    .set-move-btn,
+    .set-delete-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }
 
 .set-move-btn:hover {
@@ -1106,10 +1157,26 @@ input:focus-visible {
     flex: 1;
 }
 
+.program-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
 .program-name {
     font-weight: 600;
     font-size: 1.1rem;
-    margin-bottom: 0.25rem;
+    flex: 1;
+}
+
+.program-progress-badge {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
 }
 
 .program-progress {
@@ -1648,29 +1715,35 @@ input:focus-visible {
 
 /* Update program indicator to make select button more obvious */
 #selectDayBtn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
+    background: var(--hover-bg);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
     transition: all 0.2s ease;
+    font-weight: 500;
 }
 
 #selectDayBtn:hover {
-    background: var(--hover-bg);
+    background: var(--primary-light);
+    border-color: var(--primary);
     color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #selectDayBtn svg {
     transition: transform 0.2s ease;
+    opacity: 0.7;
 }
 
 #selectDayBtn:hover svg {
     transform: translateY(2px);
+    opacity: 1;
 }
 
 @media (max-width: 768px) {

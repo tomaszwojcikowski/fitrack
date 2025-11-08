@@ -351,8 +351,16 @@ class FiTrackApp {
     // Event Listeners
     setupEventListeners() {
         // Exercise search
-        document.getElementById('exerciseSearch').addEventListener('input', (e) => {
+        const searchInput = document.getElementById('exerciseSearch');
+        searchInput.addEventListener('input', (e) => {
             this.handleSearch(e.target.value);
+        });
+
+        searchInput.addEventListener('focus', () => {
+            // Show suggestions when focused
+            if (searchInput.value === '') {
+                this.showSuggestedExercises();
+            }
         });
 
         document.getElementById('clearSearch').addEventListener('click', () => {
@@ -509,9 +517,19 @@ class FiTrackApp {
                 const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
                 const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
                 
+                // Calculate progress percentage
+                const totalDays = program.weeks.reduce((sum, w) => sum + w.days.length, 0);
+                const completedDays = this.activeProgram.completedDays ? this.activeProgram.completedDays.length : 0;
+                const progressPercent = Math.round((completedDays / totalDays) * 100);
+
                 programIndicator.innerHTML = `
                     <div class="program-indicator-content">
-                        <div class="program-name">${program.name}</div>
+                        <div class="program-name-row">
+                            <div class="program-name">${program.name}</div>
+                            <div class="program-progress-badge" title="${completedDays}/${totalDays} days completed">
+                                ${progressPercent}%
+                            </div>
+                        </div>
                         <div class="program-progress">
                             <button id="selectDayBtn" class="btn-text" title="Select day">
                                 Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
@@ -551,8 +569,8 @@ class FiTrackApp {
         const exerciseList = document.getElementById('exerciseList');
         
         if (query.length === 0) {
-            exerciseList.classList.add('hidden');
-            exerciseList.innerHTML = '';
+            // Show popular/suggested exercises when search is empty
+            this.showSuggestedExercises();
             return;
         }
 
@@ -563,7 +581,8 @@ class FiTrackApp {
         );
 
         if (filtered.length === 0) {
-            exerciseList.classList.add('hidden');
+            exerciseList.innerHTML = '<div class="no-results">No exercises found. Try a different search term.</div>';
+            exerciseList.classList.remove('hidden');
             return;
         }
 
@@ -583,6 +602,78 @@ class FiTrackApp {
                 this.addExercise(exercise);
             });
         });
+    }
+
+    showSuggestedExercises() {
+        const exerciseList = document.getElementById('exerciseList');
+        
+        // Get recently used exercises from history
+        const recentExercises = this.getRecentlyUsedExercises();
+        
+        // Popular exercises if no history
+        const popularExercises = [
+            'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Overhead Press',
+            'Barbell Row', 'Dumbbell Curl', 'Tricep Pushdown', 'Leg Press', 'Lat Pulldown'
+        ];
+
+        let html = '';
+        
+        if (recentExercises.length > 0) {
+            html += '<div class="exercise-section-header">Recently Used</div>';
+            recentExercises.slice(0, 5).forEach(exName => {
+                const ex = EXERCISES.find(e => e.name === exName);
+                if (ex) {
+                    html += `
+                        <div class="exercise-item" data-exercise='${JSON.stringify(ex)}'>
+                            <strong>${ex.name}</strong>
+                            <small>${ex.category} • ${ex.equipment}</small>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        html += '<div class="exercise-section-header">Popular Exercises</div>';
+        popularExercises.forEach(exName => {
+            const ex = EXERCISES.find(e => e.name === exName);
+            if (ex && !recentExercises.includes(exName)) {
+                html += `
+                    <div class="exercise-item" data-exercise='${JSON.stringify(ex)}'>
+                        <strong>${ex.name}</strong>
+                        <small>${ex.category} • ${ex.equipment}</small>
+                    </div>
+                `;
+            }
+        });
+
+        exerciseList.innerHTML = html;
+        exerciseList.classList.remove('hidden');
+
+        // Add click handlers
+        exerciseList.querySelectorAll('.exercise-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const exercise = JSON.parse(e.currentTarget.getAttribute('data-exercise'));
+                this.addExercise(exercise);
+            });
+        });
+    }
+
+    getRecentlyUsedExercises() {
+        const recentExercises = [];
+        const seen = new Set();
+        
+        // Get exercises from recent workouts
+        for (let i = 0; i < Math.min(5, this.workoutHistory.length); i++) {
+            const workout = this.workoutHistory[i];
+            workout.exercises.forEach(ex => {
+                if (!seen.has(ex.name) && recentExercises.length < 5) {
+                    recentExercises.push(ex.name);
+                    seen.add(ex.name);
+                }
+            });
+        }
+        
+        return recentExercises;
     }
 
     clearSearch() {
@@ -714,7 +805,7 @@ class FiTrackApp {
         const container = document.getElementById('currentExercises');
         
         if (this.currentWorkout.length === 0) {
-            container.innerHTML = '<p class="empty-state">No exercises added yet. Search and select exercises above to start your workout.</p>';
+            container.innerHTML = '<p class="empty-state">No exercises added yet. Search and select exercises below to start your workout.</p>';
             return;
         }
 
