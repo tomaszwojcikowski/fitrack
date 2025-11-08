@@ -424,6 +424,8 @@ class FiTrackApp {
 
     async removeExercise(index) {
         const exercise = this.currentWorkout[index];
+        if (!exercise) return; // Guard against invalid index
+        
         const confirmed = await this.showConfirm(
             `Are you sure you want to remove "${exercise.name}" from your workout?`,
             'Remove Exercise'
