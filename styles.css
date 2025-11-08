@@ -127,6 +127,76 @@ body {
     color-scheme: dark;
 }
 
+/* Welcome Section */
+.welcome-section {
+    margin-bottom: 2rem;
+}
+
+.welcome-section.hidden {
+    display: none;
+}
+
+.welcome-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.welcome-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.welcome-content h2 {
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.welcome-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.welcome-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.welcome-actions .btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+    .welcome-actions {
+        flex-direction: row;
+        max-width: 600px;
+    }
+    
+    .welcome-actions .btn {
+        flex: 1;
+    }
+}
+
 /* Exercise Selection */
 .exercise-selection {
     margin-bottom: 1.5rem;

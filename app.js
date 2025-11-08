@@ -30,29 +30,6 @@ class FiTrackApp {
         // Handle URL hash on page load
         const hash = window.location.hash.slice(1); // Remove the '#'
         
-        // Check if we should propose next day workout
-        if (this.activeProgram && this.activeProgram.completedDays) {
-            const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
-            const today = new Date().toISOString().split('T')[0];
-            const lastWorkoutDate = this.workoutHistory.length > 0 ? this.workoutHistory[0].date : null;
-            
-            // If current day is completed and it's a new day, propose to move to next day
-            if (this.activeProgram.completedDays.includes(currentDayKey) && 
-                lastWorkoutDate && lastWorkoutDate !== today) {
-                // Auto-navigate to next day
-                setTimeout(() => {
-                    const program = this.getProgramById(this.activeProgram.programId);
-                    if (program) {
-                        const currentWeek = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
-                        if (currentWeek && this.activeProgram.currentDay < currentWeek.days.length) {
-                            this.showToast('Ready for your next workout day!', 'info');
-                            this.navigateProgram(1);
-                        }
-                    }
-                }, 500);
-            }
-        }
-        
         // Navigate based on hash
         if (hash === 'history') {
             this.showHistory();
@@ -61,7 +38,158 @@ class FiTrackApp {
         } else {
             // Default to workout view
             this.showWorkout();
+            
+            // Check if we should show welcome section or load program workout
+            if (this.activeProgram) {
+                // There's an active program
+                const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
+                const today = new Date().toISOString().split('T')[0];
+                const lastWorkoutDate = this.workoutHistory.length > 0 ? this.workoutHistory[0].date : null;
+                
+                // Check if current day is completed and it's a new day
+                if (this.activeProgram.completedDays && 
+                    this.activeProgram.completedDays.includes(currentDayKey) && 
+                    lastWorkoutDate && lastWorkoutDate !== today) {
+                    // Show welcome with suggestion to continue to next day
+                    this.showWelcomeWithProgram(true);
+                } else if (this.currentWorkout.length === 0) {
+                    // No workout in progress, load the current program day or show welcome
+                    const hasWorkoutToday = lastWorkoutDate === today;
+                    if (!hasWorkoutToday) {
+                        this.showWelcomeWithProgram(false);
+                    }
+                }
+            } else if (this.currentWorkout.length === 0) {
+                // No active program and no current workout - show welcome
+                this.showWelcomeSection();
+            }
         }
+    }
+
+    showWelcomeSection() {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        
+        if (!welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.remove('hidden');
+        if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        if (currentExercises) currentExercises.classList.add('hidden');
+        
+        const welcomeTitle = document.getElementById('welcomeTitle');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        
+        if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FiTrack!';
+        if (welcomeMessage) welcomeMessage.textContent = 'Choose how you\'d like to start your fitness journey:';
+    }
+
+    showWelcomeWithProgram(isNextDay) {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        const program = this.getProgramById(this.activeProgram.programId);
+        
+        if (!program || !welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.remove('hidden');
+        if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        if (currentExercises) currentExercises.classList.add('hidden');
+        
+        const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+        const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
+        
+        if (isNextDay) {
+            // Suggest moving to next day
+            let nextWeek = this.activeProgram.currentWeek;
+            let nextDay = this.activeProgram.currentDay + 1;
+            
+            if (nextDay > week.days.length) {
+                nextWeek++;
+                nextDay = 1;
+            }
+            
+            const nextWeekData = program.weeks.find(w => w.week === nextWeek);
+            const nextDayData = nextWeekData?.days.find(d => d.day === nextDay);
+            
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const startBtn = document.getElementById('startProgramFromWelcome');
+            
+            if (welcomeTitle) welcomeTitle.textContent = '🎉 Day Completed!';
+            if (welcomeMessage) {
+                welcomeMessage.textContent = nextDayData 
+                    ? `Great job! Ready for your next workout: ${nextDayData.name}?`
+                    : 'Congratulations! You\'ve completed this week. Continue to the next?';
+            }
+            
+            // Update button text
+            if (startBtn) {
+                startBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    Continue to Next Day
+                `;
+                startBtn.onclick = () => {
+                    this.navigateProgram(1);
+                    this.hideWelcomeSection();
+                };
+            }
+        } else {
+            // Show current day workout
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const startBtn = document.getElementById('startProgramFromWelcome');
+            
+            if (welcomeTitle) welcomeTitle.textContent = `${program.name}`;
+            if (welcomeMessage) {
+                welcomeMessage.textContent = day 
+                    ? `Week ${this.activeProgram.currentWeek}, Day ${this.activeProgram.currentDay}: ${day.name}`
+                    : 'Ready to continue your program?';
+            }
+            
+            // Update button text
+            if (startBtn) {
+                startBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="5 12 9 16 19 6"></polyline>
+                    </svg>
+                    Start Today's Workout
+                `;
+                startBtn.onclick = () => {
+                    this.loadProgramWorkout();
+                    this.hideWelcomeSection();
+                };
+            }
+        }
+        
+        // Update secondary button
+        const customBtn = document.getElementById('startCustomWorkout');
+        if (customBtn) {
+            customBtn.textContent = 'View All Programs';
+            customBtn.onclick = () => {
+                this.showPrograms();
+            };
+        }
+    }
+
+    hideWelcomeSection() {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        
+        if (!welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.add('hidden');
+        
+        if (this.activeProgram) {
+            if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        } else {
+            if (exerciseSelection) exerciseSelection.classList.remove('hidden');
+        }
+        
+        if (currentExercises) currentExercises.classList.remove('hidden');
     }
 
     showWelcomeTooltip() {
@@ -230,6 +358,26 @@ class FiTrackApp {
         document.getElementById('clearSearch').addEventListener('click', () => {
             this.clearSearch();
         });
+
+        // Welcome section buttons (check if elements exist for testing)
+        const startProgramBtn = document.getElementById('startProgramFromWelcome');
+        const startCustomBtn = document.getElementById('startCustomWorkout');
+        
+        if (startProgramBtn) {
+            startProgramBtn.addEventListener('click', () => {
+                if (!this.activeProgram) {
+                    this.showPrograms();
+                }
+            });
+        }
+
+        if (startCustomBtn) {
+            startCustomBtn.addEventListener('click', () => {
+                if (!this.activeProgram) {
+                    this.hideWelcomeSection();
+                }
+            });
+        }
 
         // Navigation
         document.getElementById('historyBtn').addEventListener('click', () => {
@@ -706,6 +854,15 @@ class FiTrackApp {
         // Save the current workout
         this.saveCurrentWorkout();
 
+        // Mark current program day as completed if in a program
+        if (this.activeProgram) {
+            const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
+            if (!this.activeProgram.completedDays.includes(currentDayKey)) {
+                this.activeProgram.completedDays.push(currentDayKey);
+                this.saveData();
+            }
+        }
+
         // Ask if user wants to clear the workout
         const shouldClear = await this.showConfirm(
             'Workout saved to history! Would you like to start a new workout?',
@@ -715,6 +872,14 @@ class FiTrackApp {
         if (shouldClear) {
             this.currentWorkout = [];
             this.updateUI();
+            
+            // Show appropriate welcome section
+            if (this.activeProgram) {
+                this.showWelcomeWithProgram(true);
+            } else {
+                this.showWelcomeSection();
+            }
+            
             this.showToast('Workout cleared. Ready for your next session!', 'success');
         } else {
             this.showToast('Workout saved! You can continue editing.', 'success');
