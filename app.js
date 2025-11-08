@@ -879,7 +879,12 @@ class FiTrackApp {
             if (newWeek > 1) {
                 newWeek--;
                 const prevWeek = program.weeks.find(w => w.week === newWeek);
-                newDay = prevWeek.days.length;
+                if (prevWeek) {
+                    newDay = prevWeek.days.length;
+                } else {
+                    this.showToast('Previous week not found in program data', 'error');
+                    return;
+                }
             } else {
                 this.showToast('Already at first day of program', 'info');
                 return;
