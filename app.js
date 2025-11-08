@@ -41,22 +41,22 @@ class FiTrackApp {
             
             // Check if we should show welcome section or load program workout
             if (this.activeProgram) {
-                // There's an active program
+                // There's an active program - automatically load current day
                 const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
                 const today = new Date().toISOString().split('T')[0];
                 const lastWorkoutDate = this.workoutHistory.length > 0 ? this.workoutHistory[0].date : null;
                 
-                // Check if current day is completed and it's a new day
-                if (this.activeProgram.completedDays && 
-                    this.activeProgram.completedDays.includes(currentDayKey) && 
-                    lastWorkoutDate && lastWorkoutDate !== today) {
-                    // Show welcome with suggestion to continue to next day
-                    this.showWelcomeWithProgram(true);
-                } else if (this.currentWorkout.length === 0) {
-                    // No workout in progress, load the current program day or show welcome
-                    const hasWorkoutToday = lastWorkoutDate === today;
-                    if (!hasWorkoutToday) {
-                        this.showWelcomeWithProgram(false);
+                // If no current workout, load the program workout automatically
+                if (this.currentWorkout.length === 0) {
+                    // Check if current day is completed and it's a new day
+                    if (this.activeProgram.completedDays && 
+                        this.activeProgram.completedDays.includes(currentDayKey) && 
+                        lastWorkoutDate && lastWorkoutDate !== today) {
+                        // Move to next day automatically
+                        this.navigateToNextUncompletedDay();
+                    } else {
+                        // Load current day workout automatically
+                        this.loadProgramWorkout();
                     }
                 }
             } else if (this.currentWorkout.length === 0) {
@@ -1491,6 +1491,36 @@ class FiTrackApp {
         // Load the workout for this day
         this.loadProgramWorkout();
         this.saveData();
+    }
+
+    navigateToNextUncompletedDay() {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        // Find the next uncompleted day
+        for (let weekNum = this.activeProgram.currentWeek; weekNum <= program.duration; weekNum++) {
+            const week = program.weeks.find(w => w.week === weekNum);
+            if (!week) continue;
+
+            const startDay = (weekNum === this.activeProgram.currentWeek) ? this.activeProgram.currentDay : 1;
+            
+            for (let dayNum = startDay; dayNum <= week.days.length; dayNum++) {
+                const dayKey = `w${weekNum}d${dayNum}`;
+                if (!this.activeProgram.completedDays || !this.activeProgram.completedDays.includes(dayKey)) {
+                    // Found an uncompleted day
+                    this.activeProgram.currentWeek = weekNum;
+                    this.activeProgram.currentDay = dayNum;
+                    this.loadProgramWorkout();
+                    this.saveData();
+                    return;
+                }
+            }
+        }
+
+        // If all days are completed, show congratulations
+        this.showToast('🎉 Congratulations! You\'ve completed the entire program!', 'success');
     }
 }
 
