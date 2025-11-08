@@ -248,8 +248,8 @@ describe('Workout Programs', () => {
       expect(app.currentWorkout[0].name).toBe('Squat')
     })
 
-    it('should handle time-based exercises', () => {
-      app.startProgram('hypertrophy-gains')
+    it('should handle time-based exercises', async () => {
+      await app.startProgram('hypertrophy-gains')
       app.navigateProgram(1) // Go to day 2
       app.navigateProgram(1) // Go to day 3
       app.navigateProgram(1) // Go to day 4 (Shoulders & Abs)
