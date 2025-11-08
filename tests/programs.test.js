@@ -83,8 +83,8 @@ describe('Workout Programs', () => {
       expect(app.currentWorkout[0].name).toBe('Bench Press')
     })
 
-    it('should create correct sets for exercises', () => {
-      app.startProgram('beginner-strength')
+    it('should create correct sets for exercises', async () => {
+      await app.startProgram('beginner-strength')
       
       const firstExercise = app.currentWorkout[0]
       expect(firstExercise.sets).toHaveLength(3) // Week 1 Day 1 has 3 sets
