@@ -80,6 +80,11 @@ class FiTrackApp {
             // Date changed, could trigger save
         });
 
+        // Finish workout button
+        document.getElementById('finishWorkoutBtn').addEventListener('click', () => {
+            this.finishWorkout();
+        });
+
         // Click outside to close exercise list
         document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.search-box');
@@ -103,10 +108,14 @@ class FiTrackApp {
 
     updateQuickRestButton() {
         const quickRestBtn = document.getElementById('quickRestBtn');
+        const finishWorkoutContainer = document.getElementById('finishWorkoutContainer');
+        
         if (this.currentWorkout.length > 0) {
             quickRestBtn.classList.remove('hidden');
+            finishWorkoutContainer.classList.remove('hidden');
         } else {
             quickRestBtn.classList.add('hidden');
+            finishWorkoutContainer.classList.add('hidden');
         }
     }
 
@@ -352,6 +361,27 @@ class FiTrackApp {
         }
 
         this.saveData();
+    }
+
+    finishWorkout() {
+        if (this.currentWorkout.length === 0) {
+            alert('No exercises to save!');
+            return;
+        }
+
+        // Save the current workout
+        this.saveCurrentWorkout();
+
+        // Ask if user wants to clear the workout
+        const shouldClear = confirm('Workout saved to history! Would you like to start a new workout?');
+        
+        if (shouldClear) {
+            this.currentWorkout = [];
+            this.updateUI();
+            alert('Workout cleared. Ready for your next session!');
+        } else {
+            alert('Workout saved! You can continue editing or start a new workout.');
+        }
     }
 
     // Rest Timer
