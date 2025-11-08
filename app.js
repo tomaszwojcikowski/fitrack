@@ -1,5 +1,6 @@
 // FiTrack Application
 import { EXERCISES } from './exercises.js';
+import { WORKOUT_PROGRAMS } from './programs.js';
 
 class FiTrackApp {
     constructor() {
@@ -10,6 +11,8 @@ class FiTrackApp {
         this.timerSound = document.getElementById('timerSound');
         this.confirmCallback = null;
         this.saveTimeout = null;
+        this.activeProgram = null; // { programId, currentWeek, currentDay, startedAt }
+        this.programs = WORKOUT_PROGRAMS;
         
         this.init();
     }
@@ -163,6 +166,7 @@ class FiTrackApp {
             try {
                 const data = JSON.parse(saved);
                 this.workoutHistory = data.history || [];
+                this.activeProgram = data.activeProgram || null;
             } catch (e) {
                 console.error('Error loading data:', e);
             }
@@ -171,7 +175,8 @@ class FiTrackApp {
 
     saveData() {
         const data = {
-            history: this.workoutHistory
+            history: this.workoutHistory,
+            activeProgram: this.activeProgram
         };
         localStorage.setItem('fitrack_data', JSON.stringify(data));
     }
@@ -224,6 +229,31 @@ class FiTrackApp {
             this.finishWorkout();
         });
 
+        // Programs
+        document.getElementById('programsBtn').addEventListener('click', () => {
+            this.showPrograms();
+        });
+
+        document.getElementById('backToWorkoutFromPrograms').addEventListener('click', () => {
+            this.showWorkout();
+        });
+
+        document.getElementById('closeProgramModal').addEventListener('click', () => {
+            this.closeProgramModal();
+        });
+
+        document.getElementById('quitProgramBtn').addEventListener('click', () => {
+            this.quitProgram();
+        });
+
+        document.getElementById('prevDayBtn').addEventListener('click', () => {
+            this.navigateProgram(-1);
+        });
+
+        document.getElementById('nextDayBtn').addEventListener('click', () => {
+            this.navigateProgram(1);
+        });
+
         // Click outside to close exercise list
         document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.search-box');
@@ -243,6 +273,7 @@ class FiTrackApp {
     updateUI() {
         this.renderCurrentExercises();
         this.updateQuickRestButton();
+        this.updateProgramIndicator();
     }
 
     updateQuickRestButton() {
@@ -255,6 +286,48 @@ class FiTrackApp {
         } else {
             quickRestBtn.classList.add('hidden');
             finishWorkoutContainer.classList.add('hidden');
+        }
+    }
+
+    updateProgramIndicator() {
+        const programIndicator = document.getElementById('programIndicator');
+        const programNav = document.getElementById('programNav');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+
+        if (this.activeProgram) {
+            const program = this.getProgramById(this.activeProgram.programId);
+            if (program) {
+                const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+                const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
+                
+                programIndicator.innerHTML = `
+                    <div class="program-indicator-content">
+                        <div class="program-name">${program.name}</div>
+                        <div class="program-progress">
+                            Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
+                            ${day ? ` • ${day.name}` : ''}
+                        </div>
+                    </div>
+                    <button id="quitProgramBtn" class="btn-text" title="Quit program">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                `;
+                programIndicator.classList.remove('hidden');
+                programNav.classList.remove('hidden');
+                exerciseSelection.classList.add('hidden');
+
+                // Re-attach event listener
+                document.getElementById('quitProgramBtn').addEventListener('click', () => {
+                    this.quitProgram();
+                });
+            }
+        } else {
+            programIndicator.classList.add('hidden');
+            programNav.classList.add('hidden');
+            exerciseSelection.classList.remove('hidden');
         }
     }
 
@@ -668,6 +741,199 @@ class FiTrackApp {
                 </div>
             `;
         }).join('');
+    }
+
+    // Program Management
+    showPrograms() {
+        document.getElementById('workoutView').classList.remove('active');
+        document.getElementById('programsView').classList.add('active');
+        this.renderPrograms();
+    }
+
+    renderPrograms() {
+        const container = document.getElementById('programsContent');
+        
+        container.innerHTML = this.programs.map(program => `
+            <div class="program-card">
+                <div class="program-header">
+                    <h3>${program.name}</h3>
+                    <span class="program-badge program-badge-${program.difficulty.toLowerCase()}">${program.difficulty}</span>
+                </div>
+                <p class="program-description">${program.description}</p>
+                <div class="program-meta">
+                    <span><strong>${program.duration}</strong> weeks</span>
+                    <span><strong>${program.daysPerWeek}</strong> days/week</span>
+                    <span><strong>${program.goal}</strong></span>
+                </div>
+                <button class="btn btn-primary" onclick="app.startProgram('${program.id}')">
+                    Start Program
+                </button>
+            </div>
+        `).join('');
+    }
+
+    async startProgram(programId) {
+        const program = this.programs.find(p => p.id === programId);
+        if (!program) return;
+
+        // If there's already an active program, confirm before switching
+        if (this.activeProgram) {
+            const confirmed = await this.showConfirm(
+                `You are currently on "${this.getProgramById(this.activeProgram.programId)?.name}". Starting a new program will replace your current progress. Continue?`,
+                'Switch Programs'
+            );
+            if (!confirmed) return;
+        }
+
+        // If there's a current workout, ask about clearing it
+        if (this.currentWorkout.length > 0) {
+            const confirmed = await this.showConfirm(
+                'Starting a program will replace your current workout. Continue?',
+                'Start Program'
+            );
+            if (!confirmed) return;
+        }
+
+        this.activeProgram = {
+            programId: programId,
+            currentWeek: 1,
+            currentDay: 1,
+            startedAt: new Date().toISOString(),
+            completedDays: []
+        };
+
+        this.loadProgramWorkout();
+        this.saveData();
+        this.showWorkout();
+        this.showToast(`Started program: ${program.name}`, 'success');
+    }
+
+    loadProgramWorkout() {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+        if (!week) return;
+
+        const day = week.days.find(d => d.day === this.activeProgram.currentDay);
+        if (!day) return;
+
+        // Clear current workout and load program workout
+        this.currentWorkout = day.exercises.map(exercise => {
+            // Find exercise in database
+            const dbExercise = EXERCISES.find(ex => 
+                ex.name.toLowerCase() === exercise.name.toLowerCase()
+            );
+
+            // Create sets based on program prescription
+            const sets = [];
+            for (let i = 0; i < exercise.sets; i++) {
+                const set = {
+                    reps: exercise.reps ? exercise.reps.toString() : '',
+                    weight: '',
+                    time: exercise.time || '',
+                    useTime: !!exercise.time,
+                    completed: false,
+                    prescribedReps: exercise.reps,
+                    prescribedRestSeconds: exercise.restSeconds
+                };
+                sets.push(set);
+            }
+
+            return {
+                name: exercise.name,
+                category: dbExercise?.category || 'Custom',
+                equipment: dbExercise?.equipment || 'Other',
+                sets: sets,
+                notes: exercise.notes,
+                restSeconds: exercise.restSeconds
+            };
+        });
+
+        this.updateUI();
+    }
+
+    getProgramById(programId) {
+        return this.programs.find(p => p.id === programId);
+    }
+
+    navigateProgram(direction) {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        const currentWeek = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+        if (!currentWeek) return;
+
+        let newDay = this.activeProgram.currentDay + direction;
+        let newWeek = this.activeProgram.currentWeek;
+
+        // Check boundaries
+        if (newDay < 1) {
+            // Go to previous week
+            if (newWeek > 1) {
+                newWeek--;
+                const prevWeek = program.weeks.find(w => w.week === newWeek);
+                newDay = prevWeek.days.length;
+            } else {
+                this.showToast('Already at first day of program', 'info');
+                return;
+            }
+        } else if (newDay > currentWeek.days.length) {
+            // Go to next week
+            if (newWeek < program.duration) {
+                newWeek++;
+                newDay = 1;
+            } else {
+                this.showToast('Congratulations! You\'ve completed the program!', 'success');
+                return;
+            }
+        }
+
+        // Mark current day as completed
+        if (direction > 0) {
+            const dayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
+            if (!this.activeProgram.completedDays.includes(dayKey)) {
+                this.activeProgram.completedDays.push(dayKey);
+            }
+            // Save current workout before moving on
+            if (this.currentWorkout.length > 0) {
+                this.saveCurrentWorkout();
+            }
+        }
+
+        this.activeProgram.currentWeek = newWeek;
+        this.activeProgram.currentDay = newDay;
+        this.loadProgramWorkout();
+        this.saveData();
+    }
+
+    async quitProgram() {
+        if (!this.activeProgram) return;
+
+        const confirmed = await this.showConfirm(
+            'Are you sure you want to quit the current program? Your progress will be lost.',
+            'Quit Program'
+        );
+
+        if (confirmed) {
+            this.activeProgram = null;
+            this.currentWorkout = [];
+            this.saveData();
+            this.updateUI();
+            this.showToast('Program quit. You can start a new program anytime!', 'info');
+        }
+    }
+
+    closeProgramModal() {
+        // This will be used for future program details modal
+        const modal = document.getElementById('programModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     }
 }
 
