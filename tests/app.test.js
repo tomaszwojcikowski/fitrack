@@ -363,4 +363,214 @@ describe('FiTrackApp', () => {
       await new Promise(resolve => setTimeout(resolve, 10))
     })
   })
+
+  describe('Set Management', () => {
+    beforeEach(() => {
+      // Add an exercise with multiple sets
+      app.currentWorkout = [
+        {
+          name: 'Bench Press',
+          category: 'Chest',
+          equipment: 'Barbell',
+          sets: [
+            { reps: '10', weight: '100', time: '', useTime: false, completed: false },
+            { reps: '10', weight: '100', time: '', useTime: false, completed: false },
+            { reps: '10', weight: '100', time: '', useTime: false, completed: false }
+          ]
+        }
+      ]
+    })
+
+    it('should swap sets up', () => {
+      const firstSet = app.currentWorkout[0].sets[0]
+      const secondSet = app.currentWorkout[0].sets[1]
+      
+      app.swapSet(0, 0, 1)
+      
+      expect(app.currentWorkout[0].sets[0]).toBe(secondSet)
+      expect(app.currentWorkout[0].sets[1]).toBe(firstSet)
+    })
+
+    it('should swap sets down', () => {
+      const secondSet = app.currentWorkout[0].sets[1]
+      const thirdSet = app.currentWorkout[0].sets[2]
+      
+      app.swapSet(0, 1, 2)
+      
+      expect(app.currentWorkout[0].sets[1]).toBe(thirdSet)
+      expect(app.currentWorkout[0].sets[2]).toBe(secondSet)
+    })
+
+    it('should not swap invalid set indices', () => {
+      const originalSets = [...app.currentWorkout[0].sets]
+      
+      app.swapSet(0, -1, 0)
+      expect(app.currentWorkout[0].sets).toEqual(originalSets)
+      
+      app.swapSet(0, 0, 999)
+      expect(app.currentWorkout[0].sets).toEqual(originalSets)
+    })
+
+    it('should delete a set', async () => {
+      app.showConfirm = vi.fn(() => Promise.resolve(true))
+      
+      await app.deleteSet(0, 1)
+      
+      expect(app.currentWorkout[0].sets).toHaveLength(2)
+    })
+
+    it('should not delete set if user cancels', async () => {
+      app.showConfirm = vi.fn(() => Promise.resolve(false))
+      
+      await app.deleteSet(0, 1)
+      
+      expect(app.currentWorkout[0].sets).toHaveLength(3)
+    })
+
+    it('should keep at least one set after deletion', async () => {
+      app.currentWorkout[0].sets = [{ reps: '10', weight: '100', time: '', useTime: false, completed: false }]
+      app.showConfirm = vi.fn(() => Promise.resolve(true))
+      
+      await app.deleteSet(0, 0)
+      
+      expect(app.currentWorkout[0].sets).toHaveLength(1)
+    })
+
+    it('should delete empty set without confirmation', async () => {
+      app.currentWorkout[0].sets[1] = { reps: '', weight: '', time: '', useTime: false, completed: false }
+      app.showConfirm = vi.fn()
+      
+      await app.deleteSet(0, 1)
+      
+      expect(app.showConfirm).not.toHaveBeenCalled()
+      expect(app.currentWorkout[0].sets).toHaveLength(2)
+    })
+  })
+
+  describe('URL Navigation', () => {
+    it('should update hash when showing history', () => {
+      app.showHistory()
+      expect(window.location.hash).toBe('#history')
+    })
+
+    it('should update hash when showing programs', () => {
+      app.showPrograms()
+      expect(window.location.hash).toBe('#programs')
+    })
+
+    it('should update hash when showing workout', () => {
+      app.showWorkout()
+      expect(window.location.hash).toBe('#workout')
+    })
+
+    it('should handle initial view based on hash', () => {
+      window.location.hash = '#history'
+      const newApp = new FiTrackApp()
+      
+      expect(document.getElementById('historyView').classList.contains('active')).toBe(true)
+      expect(document.getElementById('workoutView').classList.contains('active')).toBe(false)
+    })
+
+    it('should default to workout view with no hash', () => {
+      window.location.hash = ''
+      const newApp = new FiTrackApp()
+      
+      expect(document.getElementById('workoutView').classList.contains('active')).toBe(true)
+    })
+  })
+
+  describe('Time Input Parsing', () => {
+    it('should strip "s" suffix from time values', () => {
+      const program = app.getProgramById('hypertrophy-gains')
+      app.activeProgram = {
+        programId: 'hypertrophy-gains',
+        currentWeek: 1,
+        currentDay: 4
+      }
+      
+      app.loadProgramWorkout()
+      
+      // Find Plank exercise which has time: '60s'
+      const plankExercise = app.currentWorkout.find(ex => ex.name === 'Plank')
+      if (plankExercise) {
+        expect(plankExercise.sets[0].time).toBe('60')
+        expect(plankExercise.sets[0].useTime).toBe(true)
+      }
+    })
+
+    it('should handle time values without suffix', () => {
+      const program = app.getProgramById('beginner-strength')
+      app.activeProgram = {
+        programId: 'beginner-strength',
+        currentWeek: 1,
+        currentDay: 1
+      }
+      
+      app.loadProgramWorkout()
+      
+      // Exercises should load normally
+      expect(app.currentWorkout.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Active Program Indicator', () => {
+    it('should identify active program in renderPrograms', () => {
+      app.activeProgram = {
+        programId: 'beginner-strength',
+        currentWeek: 1,
+        currentDay: 1
+      }
+      
+      app.renderPrograms()
+      
+      const programsContent = document.getElementById('programsContent').innerHTML
+      expect(programsContent).toContain('Active Program')
+      expect(programsContent).toContain('program-card-active')
+    })
+
+    it('should not show active indicator when no program is active', () => {
+      app.activeProgram = null
+      
+      app.renderPrograms()
+      
+      const programsContent = document.getElementById('programsContent').innerHTML
+      expect(programsContent).not.toContain('Active Program')
+    })
+  })
+
+  describe('Workout Progress Tracking', () => {
+    it('should track completed workout days', () => {
+      app.activeProgram = {
+        programId: 'beginner-strength',
+        currentWeek: 1,
+        currentDay: 1,
+        completedDays: []
+      }
+      
+      app.navigateProgram(1)
+      
+      expect(app.activeProgram.completedDays).toContain('w1d1')
+    })
+
+    it('should save workout before navigating to next day', () => {
+      app.activeProgram = {
+        programId: 'beginner-strength',
+        currentWeek: 1,
+        currentDay: 1,
+        completedDays: []
+      }
+      app.currentWorkout = [
+        {
+          name: 'Bench Press',
+          category: 'Chest',
+          equipment: 'Barbell',
+          sets: [{ reps: '10', weight: '100', time: '', useTime: false, completed: true }]
+        }
+      ]
+      
+      app.navigateProgram(1)
+      
+      expect(app.workoutHistory.length).toBeGreaterThan(0)
+    })
+  })
 })

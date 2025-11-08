@@ -21,8 +21,175 @@ class FiTrackApp {
         this.loadData();
         this.setupEventListeners();
         this.setTodayDate();
+        this.handleInitialView();
         this.updateUI();
         this.showWelcomeTooltip();
+    }
+
+    handleInitialView() {
+        // Handle URL hash on page load
+        const hash = window.location.hash.slice(1); // Remove the '#'
+        
+        // Navigate based on hash
+        if (hash === 'history') {
+            this.showHistory();
+        } else if (hash === 'programs') {
+            this.showPrograms();
+        } else {
+            // Default to workout view
+            this.showWorkout();
+            
+            // Check if we should show welcome section or load program workout
+            if (this.activeProgram) {
+                // There's an active program
+                const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
+                const today = new Date().toISOString().split('T')[0];
+                const lastWorkoutDate = this.workoutHistory.length > 0 ? this.workoutHistory[0].date : null;
+                
+                // Check if current day is completed and it's a new day
+                if (this.activeProgram.completedDays && 
+                    this.activeProgram.completedDays.includes(currentDayKey) && 
+                    lastWorkoutDate && lastWorkoutDate !== today) {
+                    // Show welcome with suggestion to continue to next day
+                    this.showWelcomeWithProgram(true);
+                } else if (this.currentWorkout.length === 0) {
+                    // No workout in progress, load the current program day or show welcome
+                    const hasWorkoutToday = lastWorkoutDate === today;
+                    if (!hasWorkoutToday) {
+                        this.showWelcomeWithProgram(false);
+                    }
+                }
+            } else if (this.currentWorkout.length === 0) {
+                // No active program and no current workout - show welcome
+                this.showWelcomeSection();
+            }
+        }
+    }
+
+    showWelcomeSection() {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        
+        if (!welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.remove('hidden');
+        if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        if (currentExercises) currentExercises.classList.add('hidden');
+        
+        const welcomeTitle = document.getElementById('welcomeTitle');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        
+        if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FiTrack!';
+        if (welcomeMessage) welcomeMessage.textContent = 'Choose how you\'d like to start your fitness journey:';
+    }
+
+    showWelcomeWithProgram(isNextDay) {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        const program = this.getProgramById(this.activeProgram.programId);
+        
+        if (!program || !welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.remove('hidden');
+        if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        if (currentExercises) currentExercises.classList.add('hidden');
+        
+        const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+        const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
+        
+        if (isNextDay) {
+            // Suggest moving to next day
+            let nextWeek = this.activeProgram.currentWeek;
+            let nextDay = this.activeProgram.currentDay + 1;
+            
+            if (nextDay > week.days.length) {
+                nextWeek++;
+                nextDay = 1;
+            }
+            
+            const nextWeekData = program.weeks.find(w => w.week === nextWeek);
+            const nextDayData = nextWeekData?.days.find(d => d.day === nextDay);
+            
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const startBtn = document.getElementById('startProgramFromWelcome');
+            
+            if (welcomeTitle) welcomeTitle.textContent = '🎉 Day Completed!';
+            if (welcomeMessage) {
+                welcomeMessage.textContent = nextDayData 
+                    ? `Great job! Ready for your next workout: ${nextDayData.name}?`
+                    : 'Congratulations! You\'ve completed this week. Continue to the next?';
+            }
+            
+            // Update button text
+            if (startBtn) {
+                startBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                    Continue to Next Day
+                `;
+                startBtn.onclick = () => {
+                    this.navigateProgram(1);
+                    this.hideWelcomeSection();
+                };
+            }
+        } else {
+            // Show current day workout
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const startBtn = document.getElementById('startProgramFromWelcome');
+            
+            if (welcomeTitle) welcomeTitle.textContent = `${program.name}`;
+            if (welcomeMessage) {
+                welcomeMessage.textContent = day 
+                    ? `Week ${this.activeProgram.currentWeek}, Day ${this.activeProgram.currentDay}: ${day.name}`
+                    : 'Ready to continue your program?';
+            }
+            
+            // Update button text
+            if (startBtn) {
+                startBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="5 12 9 16 19 6"></polyline>
+                    </svg>
+                    Start Today's Workout
+                `;
+                startBtn.onclick = () => {
+                    this.loadProgramWorkout();
+                    this.hideWelcomeSection();
+                };
+            }
+        }
+        
+        // Update secondary button
+        const customBtn = document.getElementById('startCustomWorkout');
+        if (customBtn) {
+            customBtn.textContent = 'View All Programs';
+            customBtn.onclick = () => {
+                this.showPrograms();
+            };
+        }
+    }
+
+    hideWelcomeSection() {
+        const welcomeSection = document.getElementById('welcomeSection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        
+        if (!welcomeSection) return; // Guard for tests
+        
+        welcomeSection.classList.add('hidden');
+        
+        if (this.activeProgram) {
+            if (exerciseSelection) exerciseSelection.classList.add('hidden');
+        } else {
+            if (exerciseSelection) exerciseSelection.classList.remove('hidden');
+        }
+        
+        if (currentExercises) currentExercises.classList.remove('hidden');
     }
 
     showWelcomeTooltip() {
@@ -192,9 +359,25 @@ class FiTrackApp {
             this.clearSearch();
         });
 
-        document.getElementById('addExerciseBtn').addEventListener('click', () => {
-            this.showAddExercisePrompt();
-        });
+        // Welcome section buttons (check if elements exist for testing)
+        const startProgramBtn = document.getElementById('startProgramFromWelcome');
+        const startCustomBtn = document.getElementById('startCustomWorkout');
+        
+        if (startProgramBtn) {
+            startProgramBtn.addEventListener('click', () => {
+                if (!this.activeProgram) {
+                    this.showPrograms();
+                }
+            });
+        }
+
+        if (startCustomBtn) {
+            startCustomBtn.addEventListener('click', () => {
+                if (!this.activeProgram) {
+                    this.hideWelcomeSection();
+                }
+            });
+        }
 
         // Navigation
         document.getElementById('historyBtn').addEventListener('click', () => {
@@ -252,6 +435,26 @@ class FiTrackApp {
             const exerciseList = document.getElementById('exerciseList');
             if (!searchBox.contains(e.target) && !exerciseList.contains(e.target)) {
                 exerciseList.classList.add('hidden');
+            }
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash === 'history') {
+                document.getElementById('workoutView').classList.remove('active');
+                document.getElementById('programsView').classList.remove('active');
+                document.getElementById('historyView').classList.add('active');
+                this.renderHistory();
+            } else if (hash === 'programs') {
+                document.getElementById('workoutView').classList.remove('active');
+                document.getElementById('historyView').classList.remove('active');
+                document.getElementById('programsView').classList.add('active');
+                this.renderPrograms();
+            } else {
+                document.getElementById('historyView').classList.remove('active');
+                document.getElementById('programsView').classList.remove('active');
+                document.getElementById('workoutView').classList.add('active');
             }
         });
     }
@@ -368,32 +571,6 @@ class FiTrackApp {
         document.getElementById('exerciseList').classList.add('hidden');
     }
 
-    showAddExercisePrompt() {
-        const exerciseName = prompt('Enter exercise name:');
-        if (!exerciseName || exerciseName.trim() === '') return;
-
-        // Check if exercise already exists in database
-        const existingExercise = EXERCISES.find(ex => 
-            ex.name.toLowerCase() === exerciseName.trim().toLowerCase()
-        );
-
-        if (existingExercise) {
-            this.addExercise(existingExercise);
-        } else {
-            // Add custom exercise
-            const category = prompt('Enter category (e.g., Chest, Back, Legs):', 'Custom');
-            const equipment = prompt('Enter equipment (e.g., Barbell, Dumbbell, Bodyweight):', 'Other');
-            
-            const customExercise = {
-                name: exerciseName.trim(),
-                category: category || 'Custom',
-                equipment: equipment || 'Other'
-            };
-            
-            this.addExercise(customExercise);
-        }
-    }
-
     // Exercise Management
     addExercise(exercise) {
         const existingIndex = this.currentWorkout.findIndex(e => e.name === exercise.name);
@@ -463,6 +640,50 @@ class FiTrackApp {
         // If completing a set, start rest timer
         if (set.completed) {
             this.startRestTimer(90); // Default 90 seconds rest
+        }
+        
+        this.updateUI();
+    }
+
+    swapSet(exerciseIndex, setIndex1, setIndex2) {
+        const exercise = this.currentWorkout[exerciseIndex];
+        if (!exercise || setIndex1 < 0 || setIndex2 < 0 || 
+            setIndex1 >= exercise.sets.length || setIndex2 >= exercise.sets.length) {
+            return;
+        }
+        
+        // Swap the sets
+        const temp = exercise.sets[setIndex1];
+        exercise.sets[setIndex1] = exercise.sets[setIndex2];
+        exercise.sets[setIndex2] = temp;
+        
+        this.updateUI();
+    }
+
+    async deleteSet(exerciseIndex, setIndex) {
+        const exercise = this.currentWorkout[exerciseIndex];
+        if (!exercise || setIndex < 0 || setIndex >= exercise.sets.length) {
+            return;
+        }
+        
+        // Only confirm if the set has data
+        const set = exercise.sets[setIndex];
+        const hasData = set.reps || set.weight || set.time;
+        
+        if (hasData) {
+            const confirmed = await this.showConfirm(
+                'Are you sure you want to delete this set?',
+                'Delete Set'
+            );
+            
+            if (!confirmed) return;
+        }
+        
+        exercise.sets.splice(setIndex, 1);
+        
+        // If no sets left, keep at least one empty set
+        if (exercise.sets.length === 0) {
+            exercise.sets.push(this.createEmptySet(false));
         }
         
         this.updateUI();
@@ -540,14 +761,45 @@ class FiTrackApp {
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'reps', this.value)">`
                                 }
                             </div>
-                            <button class="set-complete ${set.completed ? 'completed' : ''}" 
-                                onclick="app.toggleSetComplete(${exIndex}, ${setIndex})"
-                                title="${set.completed ? 'Mark incomplete' : 'Mark complete'}"
-                                aria-label="${set.completed ? 'Mark set incomplete' : 'Mark set complete'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </button>
+                            <div class="set-actions">
+                                <button class="set-complete ${set.completed ? 'completed' : ''}" 
+                                    onclick="app.toggleSetComplete(${exIndex}, ${setIndex})"
+                                    title="${set.completed ? 'Mark incomplete' : 'Mark complete'}"
+                                    aria-label="${set.completed ? 'Mark set incomplete' : 'Mark set complete'}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </button>
+                                ${setIndex > 0 ? `
+                                <button class="set-move-btn" 
+                                    onclick="app.swapSet(${exIndex}, ${setIndex}, ${setIndex - 1})"
+                                    title="Move set up"
+                                    aria-label="Move set up">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="18 15 12 9 6 15"></polyline>
+                                    </svg>
+                                </button>
+                                ` : ''}
+                                ${setIndex < exercise.sets.length - 1 ? `
+                                <button class="set-move-btn" 
+                                    onclick="app.swapSet(${exIndex}, ${setIndex}, ${setIndex + 1})"
+                                    title="Move set down"
+                                    aria-label="Move set down">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                ` : ''}
+                                <button class="set-delete-btn" 
+                                    onclick="app.deleteSet(${exIndex}, ${setIndex})"
+                                    title="Delete set"
+                                    aria-label="Delete set">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -602,6 +854,15 @@ class FiTrackApp {
         // Save the current workout
         this.saveCurrentWorkout();
 
+        // Mark current program day as completed if in a program
+        if (this.activeProgram) {
+            const currentDayKey = `w${this.activeProgram.currentWeek}d${this.activeProgram.currentDay}`;
+            if (!this.activeProgram.completedDays.includes(currentDayKey)) {
+                this.activeProgram.completedDays.push(currentDayKey);
+                this.saveData();
+            }
+        }
+
         // Ask if user wants to clear the workout
         const shouldClear = await this.showConfirm(
             'Workout saved to history! Would you like to start a new workout?',
@@ -611,6 +872,14 @@ class FiTrackApp {
         if (shouldClear) {
             this.currentWorkout = [];
             this.updateUI();
+            
+            // Show appropriate welcome section
+            if (this.activeProgram) {
+                this.showWelcomeWithProgram(true);
+            } else {
+                this.showWelcomeSection();
+            }
+            
             this.showToast('Workout cleared. Ready for your next session!', 'success');
         } else {
             this.showToast('Workout saved! You can continue editing.', 'success');
@@ -688,13 +957,17 @@ class FiTrackApp {
     // Navigation
     showHistory() {
         document.getElementById('workoutView').classList.remove('active');
+        document.getElementById('programsView').classList.remove('active');
         document.getElementById('historyView').classList.add('active');
+        window.location.hash = 'history';
         this.renderHistory();
     }
 
     showWorkout() {
         document.getElementById('historyView').classList.remove('active');
+        document.getElementById('programsView').classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
+        window.location.hash = 'workout';
     }
 
     renderHistory() {
@@ -740,7 +1013,9 @@ class FiTrackApp {
     // Program Management
     showPrograms() {
         document.getElementById('workoutView').classList.remove('active');
+        document.getElementById('historyView').classList.remove('active');
         document.getElementById('programsView').classList.add('active');
+        window.location.hash = 'programs';
         this.renderPrograms();
     }
 
@@ -748,6 +1023,9 @@ class FiTrackApp {
         const container = document.getElementById('programsContent');
         
         container.innerHTML = this.programs.map(program => {
+            // Check if this is the active program
+            const isActive = this.activeProgram && this.activeProgram.programId === program.id;
+            
             // Build blocks info for advanced programs
             let blocksInfo = '';
             if (program.blocks && program.blocks.length > 0) {
@@ -774,7 +1052,8 @@ class FiTrackApp {
             }
 
             return `
-                <div class="program-card">
+                <div class="program-card ${isActive ? 'program-card-active' : ''}">
+                    ${isActive ? '<div class="program-active-badge">Active Program</div>' : ''}
                     <div class="program-header">
                         <h3>${program.name}</h3>
                         <span class="program-badge program-badge-${program.difficulty.toLowerCase()}">${program.difficulty}</span>
@@ -983,10 +1262,16 @@ class FiTrackApp {
             const sets = [];
             const numSets = exercise.sets || 1;
             for (let i = 0; i < numSets; i++) {
+                // Parse time value to remove 's' suffix if present (e.g., "30s" -> "30")
+                let timeValue = exercise.time || '';
+                if (timeValue && typeof timeValue === 'string' && timeValue.endsWith('s')) {
+                    timeValue = timeValue.slice(0, -1);
+                }
+                
                 const set = {
                     reps: exercise.reps ? exercise.reps.toString() : '',
                     weight: exercise.weight || '',
-                    time: exercise.time || '',
+                    time: timeValue,
                     useTime: !!exercise.time,
                     completed: false,
                     prescribedReps: exercise.reps,
