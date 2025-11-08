@@ -381,9 +381,7 @@ class FiTrackApp {
 
         if (startCustomBtn) {
             startCustomBtn.addEventListener('click', () => {
-                if (!this.activeProgram) {
-                    this.hideWelcomeSection();
-                }
+                this.hideWelcomeSection();
             });
         }
 
@@ -820,7 +818,7 @@ class FiTrackApp {
                         </svg>
                     </button>
                     <div class="exercise-title">
-                        <h3>${exercise.name}</h3>
+                        <h3 class="exercise-name-clickable" onclick="app.showExerciseHistory('${exercise.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')" title="View history for ${exercise.name}">${exercise.name}</h3>
                         <small>${exercise.category} • ${exercise.equipment}</small>
                     </div>
                     <div class="exercise-actions">
@@ -844,8 +842,9 @@ class FiTrackApp {
                 </div>
                 <div class="sets-list">
                     ${exercise.sets.map((set, setIndex) => `
-                        <div class="set-row">
-                            <div class="set-number">${setIndex + 1}</div>
+                        <div class="set-row-wrapper" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                            <div class="set-row">
+                                <div class="set-number">${setIndex + 1}</div>
                             <div class="set-input">
                                 <label>Weight (kg)</label>
                                 <input type="number" 
@@ -896,16 +895,17 @@ class FiTrackApp {
                                         <polyline points="20 6 9 17 4 12"></polyline>
                                     </svg>
                                 </button>
-                                <button class="set-delete-btn" 
-                                    onclick="app.deleteSet(${exIndex}, ${setIndex})"
-                                    title="Delete set"
-                                    aria-label="Delete set">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
                             </div>
+                            <button class="set-delete-btn-swipe" 
+                                onclick="app.deleteSet(${exIndex}, ${setIndex})"
+                                title="Delete set"
+                                aria-label="Delete set">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Delete
+                            </button>
                         </div>
                     `).join('')}
                 </div>
@@ -921,6 +921,9 @@ class FiTrackApp {
 
         // Setup drag and drop for exercises
         this.setupExerciseDragAndDrop();
+
+        // Setup swipe to delete for sets
+        this.setupSwipeToDelete();
 
         // Save workout automatically
         this.saveCurrentWorkout();
@@ -973,6 +976,77 @@ class FiTrackApp {
                 if (draggedElement !== card) {
                     const dropIndex = parseInt(card.getAttribute('data-exercise-index'));
                     this.moveExercise(draggedIndex, dropIndex);
+                }
+            });
+        });
+    }
+
+    setupSwipeToDelete() {
+        const setWrappers = document.querySelectorAll('.set-row-wrapper');
+        
+        setWrappers.forEach(wrapper => {
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+            const setRow = wrapper.querySelector('.set-row');
+            
+            const handleStart = (e) => {
+                // Get touch or mouse position
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                currentX = startX;
+                isDragging = true;
+                setRow.style.transition = 'none';
+            };
+            
+            const handleMove = (e) => {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const diff = currentX - startX;
+                
+                // Only allow left swipe
+                if (diff < 0) {
+                    const maxSwipe = -80;
+                    const swipeAmount = Math.max(diff, maxSwipe);
+                    setRow.style.transform = `translateX(${swipeAmount}px)`;
+                }
+            };
+            
+            const handleEnd = (e) => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                setRow.style.transition = 'transform 0.3s ease';
+                
+                const diff = currentX - startX;
+                
+                // If swiped more than 40px to the left, reveal delete button
+                if (diff < -40) {
+                    setRow.style.transform = 'translateX(-80px)';
+                    wrapper.classList.add('delete-revealed');
+                } else {
+                    setRow.style.transform = 'translateX(0)';
+                    wrapper.classList.remove('delete-revealed');
+                }
+            };
+            
+            // Touch events
+            wrapper.addEventListener('touchstart', handleStart, { passive: true });
+            wrapper.addEventListener('touchmove', handleMove, { passive: false });
+            wrapper.addEventListener('touchend', handleEnd, { passive: true });
+            
+            // Mouse events for testing on desktop
+            wrapper.addEventListener('mousedown', handleStart);
+            wrapper.addEventListener('mousemove', handleMove);
+            wrapper.addEventListener('mouseup', handleEnd);
+            wrapper.addEventListener('mouseleave', handleEnd);
+            
+            // Close swipe when clicking elsewhere
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target) && wrapper.classList.contains('delete-revealed')) {
+                    setRow.style.transform = 'translateX(0)';
+                    wrapper.classList.remove('delete-revealed');
                 }
             });
         });
@@ -1795,6 +1869,97 @@ class FiTrackApp {
 
         // If all days are completed, show congratulations
         this.showToast('🎉 Congratulations! You\'ve completed the entire program!', 'success');
+    }
+
+    showExerciseHistory(exerciseName) {
+        // Get all history for this exercise
+        const exerciseHistory = [];
+        
+        this.workoutHistory.forEach(workout => {
+            const exercise = workout.exercises.find(ex => ex.name === exerciseName);
+            if (exercise && exercise.sets && exercise.sets.length > 0) {
+                exerciseHistory.push({
+                    date: workout.date,
+                    sets: exercise.sets
+                });
+            }
+        });
+
+        if (exerciseHistory.length === 0) {
+            this.showToast(`No history found for ${exerciseName}`, 'info');
+            return;
+        }
+
+        // Create modal to show history
+        const modal = document.createElement('div');
+        modal.className = 'exercise-history-modal';
+        modal.innerHTML = `
+            <div class="exercise-history-content">
+                <div class="exercise-history-header">
+                    <h2>📊 ${exerciseName}</h2>
+                    <button class="close-btn" aria-label="Close">&times;</button>
+                </div>
+                <div class="exercise-history-body">
+                    <div class="exercise-history-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${exerciseHistory.length}</div>
+                            <div class="stat-label">Workouts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${exerciseHistory.reduce((sum, h) => sum + h.sets.length, 0)}</div>
+                            <div class="stat-label">Total Sets</div>
+                        </div>
+                    </div>
+                    <div class="exercise-history-list">
+                        ${exerciseHistory.map(history => {
+                            const date = new Date(history.date + 'T00:00:00');
+                            const dateStr = date.toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            
+                            return `
+                                <div class="history-entry">
+                                    <div class="history-entry-date">${dateStr}</div>
+                                    <div class="history-entry-sets">
+                                        ${history.sets.map((set, idx) => `
+                                            <div class="history-entry-set">
+                                                <span class="set-num">Set ${idx + 1}:</span>
+                                                ${set.weight ? `<span class="set-weight">${set.weight} kg</span>` : ''}
+                                                ${set.reps ? `<span class="set-reps">× ${set.reps} reps</span>` : ''}
+                                                ${set.time ? `<span class="set-time">${set.time}</span>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="exercise-history-footer">
+                    <button class="btn btn-primary close-history-btn">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close handlers
+        const closeModal = () => {
+            modal.classList.add('fade-out');
+            setTimeout(() => document.body.removeChild(modal), 300);
+        };
+
+        modal.querySelector('.close-btn').addEventListener('click', closeModal);
+        modal.querySelector('.close-history-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Animate in
+        setTimeout(() => modal.classList.add('show'), 10);
     }
 }
 
