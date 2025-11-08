@@ -143,7 +143,4 @@ const EXERCISES = [
 EXERCISES.sort((a, b) => a.name.localeCompare(b.name));
 
 // Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { EXERCISES };
-}
 export { EXERCISES };

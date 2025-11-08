@@ -1,4 +1,6 @@
 // FiTrack Application
+import { EXERCISES } from './exercises.js';
+
 class FiTrackApp {
     constructor() {
         this.currentWorkout = [];
@@ -514,7 +516,4 @@ if (typeof document !== 'undefined') {
 }
 
 // Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { FiTrackApp };
-}
 export { FiTrackApp };
