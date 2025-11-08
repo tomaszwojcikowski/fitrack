@@ -810,13 +810,28 @@ class FiTrackApp {
         }
 
         container.innerHTML = this.currentWorkout.map((exercise, exIndex) => `
-            <div class="exercise-card">
+            <div class="exercise-card" draggable="true" data-exercise-index="${exIndex}">
                 <div class="exercise-header">
+                    <button class="drag-handle" aria-label="Drag to reorder exercise">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
                     <div class="exercise-title">
                         <h3>${exercise.name}</h3>
                         <small>${exercise.category} • ${exercise.equipment}</small>
                     </div>
                     <div class="exercise-actions">
+                        <button class="btn-icon" onclick="app.swapExercise(${exIndex})" title="Swap exercise" aria-label="Swap ${exercise.name} with another exercise">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="17 1 21 5 17 9"></polyline>
+                                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                <polyline points="7 23 3 19 7 15"></polyline>
+                                <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                            </svg>
+                        </button>
                         <button class="btn-icon" onclick="app.removeExercise(${exIndex})" title="Remove exercise" aria-label="Remove ${exercise.name} from workout">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="3 6 5 6 21 6"></polyline>
@@ -881,26 +896,6 @@ class FiTrackApp {
                                         <polyline points="20 6 9 17 4 12"></polyline>
                                     </svg>
                                 </button>
-                                ${setIndex > 0 ? `
-                                <button class="set-move-btn" 
-                                    onclick="app.swapSet(${exIndex}, ${setIndex}, ${setIndex - 1})"
-                                    title="Move set up"
-                                    aria-label="Move set up">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="18 15 12 9 6 15"></polyline>
-                                    </svg>
-                                </button>
-                                ` : ''}
-                                ${setIndex < exercise.sets.length - 1 ? `
-                                <button class="set-move-btn" 
-                                    onclick="app.swapSet(${exIndex}, ${setIndex}, ${setIndex + 1})"
-                                    title="Move set down"
-                                    aria-label="Move set down">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </button>
-                                ` : ''}
                                 <button class="set-delete-btn" 
                                     onclick="app.deleteSet(${exIndex}, ${setIndex})"
                                     title="Delete set"
@@ -924,8 +919,196 @@ class FiTrackApp {
             </div>
         `).join('');
 
+        // Setup drag and drop for exercises
+        this.setupExerciseDragAndDrop();
+
         // Save workout automatically
         this.saveCurrentWorkout();
+    }
+
+    setupExerciseDragAndDrop() {
+        const exerciseCards = document.querySelectorAll('.exercise-card');
+        let draggedElement = null;
+        let draggedIndex = null;
+
+        exerciseCards.forEach((card, index) => {
+            // Drag start
+            card.addEventListener('dragstart', (e) => {
+                draggedElement = card;
+                draggedIndex = parseInt(card.getAttribute('data-exercise-index'));
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', card.innerHTML);
+            });
+
+            // Drag end
+            card.addEventListener('dragend', (e) => {
+                card.classList.remove('dragging');
+                // Remove all drag-over classes
+                exerciseCards.forEach(c => c.classList.remove('drag-over'));
+            });
+
+            // Drag over
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                if (draggedElement !== card) {
+                    card.classList.add('drag-over');
+                }
+            });
+
+            // Drag leave
+            card.addEventListener('dragleave', (e) => {
+                card.classList.remove('drag-over');
+            });
+
+            // Drop
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                card.classList.remove('drag-over');
+                
+                if (draggedElement !== card) {
+                    const dropIndex = parseInt(card.getAttribute('data-exercise-index'));
+                    this.moveExercise(draggedIndex, dropIndex);
+                }
+            });
+        });
+    }
+
+    moveExercise(fromIndex, toIndex) {
+        if (fromIndex === toIndex) return;
+        
+        // Remove from old position
+        const [movedExercise] = this.currentWorkout.splice(fromIndex, 1);
+        // Insert at new position
+        this.currentWorkout.splice(toIndex, 0, movedExercise);
+        
+        // Re-render with smooth animation
+        this.updateUI();
+        this.showToast('Exercise reordered', 'success');
+    }
+
+    swapExercise(exerciseIndex) {
+        const currentExercise = this.currentWorkout[exerciseIndex];
+        
+        // Create and show swap dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'swap-exercise-dialog';
+        dialog.innerHTML = `
+            <div class="swap-dialog-content">
+                <div class="swap-dialog-header">
+                    <h3>Swap Exercise: ${currentExercise.name}</h3>
+                    <button class="close-btn" aria-label="Close">&times;</button>
+                </div>
+                <div class="swap-dialog-body">
+                    <div class="search-box">
+                        <input type="text" id="swapExerciseSearch" placeholder="Search for replacement exercise..." autocomplete="off">
+                        <button class="clear-btn" id="swapClearSearch" aria-label="Clear search">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="swapExerciseList" class="swap-exercise-list"></div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        // Focus search input
+        const searchInput = dialog.querySelector('#swapExerciseSearch');
+        setTimeout(() => searchInput.focus(), 100);
+        
+        // Close handlers
+        const closeDialog = () => {
+            dialog.classList.add('fade-out');
+            setTimeout(() => document.body.removeChild(dialog), 300);
+        };
+        
+        dialog.querySelector('.close-btn').addEventListener('click', closeDialog);
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) closeDialog();
+        });
+        
+        // Clear search
+        dialog.querySelector('#swapClearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            searchInput.focus();
+            showSwapExercises('');
+        });
+        
+        // Search functionality
+        const showSwapExercises = (query) => {
+            const listEl = dialog.querySelector('#swapExerciseList');
+            
+            let filtered = EXERCISES;
+            if (query.length > 0) {
+                filtered = EXERCISES.filter(ex => 
+                    ex.name.toLowerCase().includes(query.toLowerCase()) ||
+                    ex.category.toLowerCase().includes(query.toLowerCase()) ||
+                    ex.equipment.toLowerCase().includes(query.toLowerCase())
+                );
+            }
+            
+            // Filter out the current exercise
+            filtered = filtered.filter(ex => ex.name !== currentExercise.name);
+            
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div class="no-results">No exercises found.</div>';
+                return;
+            }
+            
+            listEl.innerHTML = filtered.slice(0, 20).map(ex => `
+                <div class="exercise-item" data-exercise='${JSON.stringify(ex)}'>
+                    <strong>${ex.name}</strong>
+                    <small>${ex.category} • ${ex.equipment}</small>
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            listEl.querySelectorAll('.exercise-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const newExercise = JSON.parse(item.getAttribute('data-exercise'));
+                    this.performExerciseSwap(exerciseIndex, newExercise);
+                    closeDialog();
+                });
+            });
+        };
+        
+        searchInput.addEventListener('input', (e) => {
+            showSwapExercises(e.target.value);
+        });
+        
+        // Show initial list
+        showSwapExercises('');
+        
+        // Animate in
+        setTimeout(() => dialog.classList.add('show'), 10);
+    }
+
+    performExerciseSwap(exerciseIndex, newExercise) {
+        const oldExercise = this.currentWorkout[exerciseIndex];
+        
+        // Preserve sets structure but clear values
+        const preservedSets = oldExercise.sets.map(set => ({
+            ...set,
+            // Keep completed status but suggest re-evaluation
+            completed: false
+        }));
+        
+        // Replace exercise
+        this.currentWorkout[exerciseIndex] = {
+            ...newExercise,
+            sets: preservedSets
+        };
+        
+        this.updateUI();
+        this.showToast(`Swapped ${oldExercise.name} with ${newExercise.name}`, 'success');
     }
 
     saveCurrentWorkout() {
