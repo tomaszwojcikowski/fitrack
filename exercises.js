@@ -137,6 +137,86 @@ const EXERCISES = [
     { name: "Sprints", category: "Cardio", equipment: "Bodyweight" },
     { name: "Stair Climber", category: "Cardio", equipment: "Machine" },
     { name: "Elliptical", category: "Cardio", equipment: "Machine" },
+    { name: "Box Jump", category: "Cardio", equipment: "Equipment" },
+    { name: "Kettlebell Swing", category: "Cardio", equipment: "Equipment" },
+    
+    // Calisthenics & Bodyweight Strength
+    { name: "HSPU", category: "Shoulders", equipment: "Bodyweight" },
+    { name: "Wall Handstand Hold", category: "Shoulders", equipment: "Bodyweight" },
+    { name: "Pistol Squats", category: "Quads", equipment: "Bodyweight" },
+    { name: "Ring Push-ups", category: "Chest", equipment: "Bodyweight" },
+    { name: "Ring Rows", category: "Back", equipment: "Bodyweight" },
+    { name: "Ring Dips", category: "Triceps", equipment: "Bodyweight" },
+    { name: "Ring Support Hold", category: "Core", equipment: "Bodyweight" },
+    { name: "Weighted Pull-ups", category: "Back", equipment: "Bodyweight" },
+    { name: "Weighted Dips", category: "Triceps", equipment: "Bodyweight" },
+    { name: "Pull-up Ladders", category: "Back", equipment: "Bodyweight" },
+    { name: "Archer Rows", category: "Back", equipment: "Bodyweight" },
+    { name: "Mixed-Grip Pull-ups", category: "Back", equipment: "Bodyweight" },
+    { name: "L-Sit Progression", category: "Core", equipment: "Bodyweight" },
+    { name: "L-Sit Pull-ups", category: "Core", equipment: "Bodyweight" },
+    { name: "Crow Stand", category: "Core", equipment: "Bodyweight" },
+    { name: "Skin the Cat", category: "Core", equipment: "Bodyweight" },
+    { name: "Pseudo-Planche Holds", category: "Core", equipment: "Bodyweight" },
+    { name: "Pseudo-Planche Push-ups", category: "Chest", equipment: "Bodyweight" },
+    { name: "Tricep Dips", category: "Triceps", equipment: "Bodyweight" },
+    
+    // Core & Abs - Additional
+    { name: "Hollow Body Rocks", category: "Core", equipment: "Bodyweight" },
+    { name: "Arch Body Rocks", category: "Core", equipment: "Bodyweight" },
+    { name: "Hanging Knee Raises", category: "Core", equipment: "Bodyweight" },
+    { name: "Hanging Leg Raise", category: "Core", equipment: "Bodyweight" },
+    { name: "Ab Wheel Rollouts", category: "Core", equipment: "Equipment" },
+    { name: "Abs Wheel", category: "Core", equipment: "Equipment" },
+    { name: "Plank Drags", category: "Core", equipment: "Equipment" },
+    { name: "Bird-Dog", category: "Core", equipment: "Bodyweight" },
+    
+    // Back - Additional
+    { name: "Cable Row", category: "Back", equipment: "Cable" },
+    { name: "Deficit Deadlift", category: "Back", equipment: "Barbell" },
+    { name: "Dead Hang", category: "Back", equipment: "Bodyweight" },
+    { name: "Gentle Dead Hang", category: "Back", equipment: "Bodyweight" },
+    
+    // Legs - Additional
+    { name: "Calf Raise", category: "Calves", equipment: "Bodyweight" },
+    { name: "Cossack Squats", category: "Quads", equipment: "Bodyweight" },
+    { name: "Pause Squat", category: "Quads", equipment: "Barbell" },
+    
+    // Chest - Additional
+    { name: "Pause Bench Press", category: "Chest", equipment: "Barbell" },
+    
+    // Olympic & Functional
+    { name: "Turkish Get-Up", category: "Olympic", equipment: "Equipment" },
+    
+    // Mobility & Warm-up
+    { name: "Wrist Mobility", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Shoulder CARs", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Cat-Cow", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Spiderman Lunge w/ T-Spine Rotation", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Deep Squat Hold", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Pigeon Stretch", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Chest Stretch", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Child's Pose w/ Lat Stretch", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Tricep/Chest Dip Stretch", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Wrist/Forearm Stretches", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Stretches", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Symmetrical Stretch", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Gentle Stretches", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Thorough Warm-up", category: "Mobility", equipment: "Bodyweight" },
+    { name: "Light activation", category: "Mobility", equipment: "Bodyweight" },
+    
+    // Test Exercises
+    { name: "Max Reps Bodyweight Pull-ups", category: "Back", equipment: "Bodyweight" },
+    { name: "Max Reps Bodyweight Dips", category: "Triceps", equipment: "Bodyweight" },
+    { name: "Max Reps Pistol Squats", category: "Quads", equipment: "Bodyweight" },
+    { name: "3-Rep Max (3RM) Weighted Pull-up", category: "Back", equipment: "Bodyweight" },
+    { name: "5-Rep Max (5RM) Weighted Push-up", category: "Chest", equipment: "Bodyweight" },
+    
+    // Placeholder exercises for custom programs
+    { name: "Core Work", category: "Core", equipment: "Bodyweight" },
+    { name: "Core Work Variation 2", category: "Core", equipment: "Bodyweight" },
+    { name: "Advanced Core Work", category: "Core", equipment: "Bodyweight" },
+    { name: "Congratulations!", category: "Mobility", equipment: "Bodyweight" },
 ];
 
 // Sort exercises alphabetically

@@ -43,22 +43,6 @@
                 <!-- Program Indicator -->
                 <div id="programIndicator" class="program-indicator hidden"></div>
 
-                <!-- Program Navigation -->
-                <div id="programNav" class="program-nav hidden">
-                    <button id="prevDayBtn" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
-                        Previous Day
-                    </button>
-                    <button id="nextDayBtn" class="btn btn-primary">
-                        Next Day
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </button>
-                </div>
-
                 <!-- Welcome/Start Suggestion -->
                 <div id="welcomeSection" class="welcome-section hidden">
                     <div class="welcome-content">
@@ -84,7 +68,12 @@
                     </div>
                 </div>
 
-                <!-- Exercise Selection -->
+                <!-- Current Exercises -->
+                <div id="currentExercises" class="current-exercises">
+                    <p class="empty-state">No exercises added yet. Search and select exercises below to start your workout.</p>
+                </div>
+
+                <!-- Exercise Selection (moved to bottom) -->
                 <div class="exercise-selection">
                     <div class="search-box">
                         <label for="exerciseSearch" class="visually-hidden">Search for exercises</label>
@@ -98,11 +87,6 @@
                     </div>
 
                     <div id="exerciseList" class="exercise-list hidden"></div>
-                </div>
-
-                <!-- Current Exercises -->
-                <div id="currentExercises" class="current-exercises">
-                    <p class="empty-state">No exercises added yet. Search and select exercises above to start your workout.</p>
                 </div>
 
                 <!-- Finish Workout Button -->
@@ -193,6 +177,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Day Selector Modal -->
+    <div id="daySelectorModal" class="confirm-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="daySelectorTitle">
+        <div class="confirm-content day-selector-content">
+            <h3 id="daySelectorTitle" class="confirm-title">Select Workout Day</h3>
+            <div id="daySelectorBody" class="day-selector-body"></div>
+            <div class="confirm-actions">
+                <button id="daySelectorCancel" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Current Workout Button (shown when in programs or history view) -->
+    <button id="currentWorkoutBtn" class="floating-workout-btn hidden" title="View Current Workout" aria-label="View current workout">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span>Current Workout</span>
+    </button>
 
     <!-- Audio for timer -->
     <audio id="timerSound" preload="auto">

@@ -421,13 +421,13 @@ class FiTrackApp {
             this.showWorkout();
         });
 
-        document.getElementById('prevDayBtn').addEventListener('click', () => {
-            this.navigateProgram(-1);
-        });
-
-        document.getElementById('nextDayBtn').addEventListener('click', () => {
-            this.navigateProgram(1);
-        });
+        // Current workout button
+        const currentWorkoutBtn = document.getElementById('currentWorkoutBtn');
+        if (currentWorkoutBtn) {
+            currentWorkoutBtn.addEventListener('click', () => {
+                this.showWorkout();
+            });
+        }
 
         // Click outside to close exercise list
         document.addEventListener('click', (e) => {
@@ -469,6 +469,7 @@ class FiTrackApp {
         this.renderCurrentExercises();
         this.updateQuickRestButton();
         this.updateProgramIndicator();
+        this.updateCurrentWorkoutButton();
     }
 
     updateQuickRestButton() {
@@ -484,9 +485,22 @@ class FiTrackApp {
         }
     }
 
+    updateCurrentWorkoutButton() {
+        const currentWorkoutBtn = document.getElementById('currentWorkoutBtn');
+        const workoutView = document.getElementById('workoutView');
+        
+        if (!currentWorkoutBtn) return;
+        
+        // Show button if there's a current workout and we're not on the workout view
+        if (this.currentWorkout.length > 0 && !workoutView.classList.contains('active')) {
+            currentWorkoutBtn.classList.remove('hidden');
+        } else {
+            currentWorkoutBtn.classList.add('hidden');
+        }
+    }
+
     updateProgramIndicator() {
         const programIndicator = document.getElementById('programIndicator');
-        const programNav = document.getElementById('programNav');
         const exerciseSelection = document.querySelector('.exercise-selection');
 
         if (this.activeProgram) {
@@ -499,8 +513,13 @@ class FiTrackApp {
                     <div class="program-indicator-content">
                         <div class="program-name">${program.name}</div>
                         <div class="program-progress">
-                            Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
-                            ${day ? ` • ${day.name}` : ''}
+                            <button id="selectDayBtn" class="btn-text" title="Select day">
+                                Week ${this.activeProgram.currentWeek}/${program.duration} • Day ${this.activeProgram.currentDay}/${week?.days.length || 0}
+                                ${day ? ` • ${day.name}` : ''}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     <button id="quitProgramBtn" class="btn-text" title="Quit program">
@@ -511,17 +530,18 @@ class FiTrackApp {
                     </button>
                 `;
                 programIndicator.classList.remove('hidden');
-                programNav.classList.remove('hidden');
                 exerciseSelection.classList.add('hidden');
 
-                // Re-attach event listener
+                // Re-attach event listeners
                 document.getElementById('quitProgramBtn').addEventListener('click', () => {
                     this.quitProgram();
+                });
+                document.getElementById('selectDayBtn').addEventListener('click', () => {
+                    this.showDaySelector();
                 });
             }
         } else {
             programIndicator.classList.add('hidden');
-            programNav.classList.add('hidden');
             exerciseSelection.classList.remove('hidden');
         }
     }
@@ -961,6 +981,7 @@ class FiTrackApp {
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
         this.renderHistory();
+        this.updateCurrentWorkoutButton();
     }
 
     showWorkout() {
@@ -968,6 +989,7 @@ class FiTrackApp {
         document.getElementById('programsView').classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
         window.location.hash = 'workout';
+        this.updateCurrentWorkoutButton();
     }
 
     renderHistory() {
@@ -1017,6 +1039,7 @@ class FiTrackApp {
         document.getElementById('programsView').classList.add('active');
         window.location.hash = 'programs';
         this.renderPrograms();
+        this.updateCurrentWorkoutButton();
     }
 
     renderPrograms() {
@@ -1382,6 +1405,92 @@ class FiTrackApp {
         if (modal) {
             modal.classList.add('hidden');
         }
+    }
+
+    showDaySelector() {
+        if (!this.activeProgram) return;
+
+        const program = this.getProgramById(this.activeProgram.programId);
+        if (!program) return;
+
+        const modal = document.getElementById('daySelectorModal');
+        const body = document.getElementById('daySelectorBody');
+        
+        if (!modal || !body) return;
+
+        // Build day selector grid
+        let html = '<div class="day-selector-grid">';
+        
+        program.weeks.forEach(week => {
+            html += `<div class="week-section">
+                <h4>Week ${week.week}</h4>
+                <div class="day-buttons">`;
+            
+            week.days.forEach(day => {
+                const dayKey = `w${week.week}d${day.day}`;
+                const isCompleted = this.activeProgram.completedDays && this.activeProgram.completedDays.includes(dayKey);
+                const isCurrent = week.week === this.activeProgram.currentWeek && day.day === this.activeProgram.currentDay;
+                const classes = `day-btn ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+                
+                html += `
+                    <button class="${classes}" data-week="${week.week}" data-day="${day.day}">
+                        <div class="day-number">Day ${day.day}</div>
+                        <div class="day-name">${day.name}</div>
+                        ${isCompleted ? '<span class="check-mark">✓</span>' : ''}
+                        ${isCurrent ? '<span class="current-mark">▶</span>' : ''}
+                    </button>
+                `;
+            });
+            
+            html += '</div></div>';
+        });
+        
+        html += '</div>';
+        body.innerHTML = html;
+
+        // Add event listeners to day buttons
+        body.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const week = parseInt(btn.getAttribute('data-week'));
+                const day = parseInt(btn.getAttribute('data-day'));
+                this.selectProgramDay(week, day);
+                this.closeDaySelector();
+            });
+        });
+
+        modal.classList.remove('hidden');
+
+        // Add close handler
+        const cancelBtn = document.getElementById('daySelectorCancel');
+        if (cancelBtn) {
+            cancelBtn.onclick = () => this.closeDaySelector();
+        }
+
+        // Close on backdrop click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeDaySelector();
+            }
+        };
+    }
+
+    closeDaySelector() {
+        const modal = document.getElementById('daySelectorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    selectProgramDay(week, day) {
+        if (!this.activeProgram) return;
+
+        // Update current day
+        this.activeProgram.currentWeek = week;
+        this.activeProgram.currentDay = day;
+        
+        // Load the workout for this day
+        this.loadProgramWorkout();
+        this.saveData();
     }
 }
 
