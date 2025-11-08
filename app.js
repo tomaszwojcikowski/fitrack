@@ -818,7 +818,7 @@ class FiTrackApp {
                         </svg>
                     </button>
                     <div class="exercise-title">
-                        <h3 class="exercise-name-clickable" onclick="app.showExerciseHistory('${exercise.name.replace(/'/g, "\\'")}')" title="View history for ${exercise.name}">${exercise.name}</h3>
+                        <h3 class="exercise-name-clickable" onclick="app.showExerciseHistory('${exercise.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')" title="View history for ${exercise.name}">${exercise.name}</h3>
                         <small>${exercise.category} • ${exercise.equipment}</small>
                     </div>
                     <div class="exercise-actions">
