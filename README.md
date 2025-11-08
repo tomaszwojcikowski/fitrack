@@ -2,6 +2,8 @@
 
 A local, offline-first fitness workout tracking web application with no backend required. Track your workouts, exercises, sets, reps, weights, and rest times with a clean, mobile-optimized interface.
 
+🌐 **Live Demo**: [https://tomaszwojcikowski.github.io/fitrack/](https://tomaszwojcikowski.github.io/fitrack/)
+
 ## Features
 
 - ✅ **130+ Exercise Database** - Comprehensive list of exercises covering all major muscle groups
@@ -101,6 +103,16 @@ All your data is stored locally in your browser. No data is sent to any server. 
 - LocalStorage API for data persistence
 - Web Audio API for timer sounds
 - Responsive CSS Grid and Flexbox layouts
+
+## Deployment
+
+This application is automatically deployed to GitHub Pages when changes are pushed to the main branch. The deployment is handled by GitHub Actions.
+
+To deploy your own version:
+1. Fork this repository
+2. Go to your repository Settings > Pages
+3. Under "Build and deployment", select "GitHub Actions" as the source
+4. Push changes to the main branch to trigger automatic deployment
 
 ## License
 
