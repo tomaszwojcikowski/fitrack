@@ -8,6 +8,8 @@ class FiTrackApp {
         this.restTimerInterval = null;
         this.restTimerSeconds = 0;
         this.timerSound = document.getElementById('timerSound');
+        this.confirmCallback = null;
+        this.saveTimeout = null;
         
         this.init();
     }
@@ -17,6 +19,141 @@ class FiTrackApp {
         this.setupEventListeners();
         this.setTodayDate();
         this.updateUI();
+        this.showWelcomeTooltip();
+    }
+
+    showWelcomeTooltip() {
+        // Only show welcome tip if this is first time user
+        const hasSeenWelcome = localStorage.getItem('fitrack_welcome_seen');
+        if (!hasSeenWelcome && this.currentWorkout.length === 0) {
+            setTimeout(() => {
+                this.showToast('👋 Welcome to FiTrack! Start by searching for an exercise above.', 'info');
+                localStorage.setItem('fitrack_welcome_seen', 'true');
+            }, 500);
+        }
+    }
+
+    // Toast Notifications
+    showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icons = {
+            success: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+            error: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+            warning: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+            info: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+        };
+        
+        toast.innerHTML = `
+            <div class="toast-icon">${icons[type]}</div>
+            <div class="toast-message">${message}</div>
+            <button class="toast-close" aria-label="Close notification">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Close button handler
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            this.removeToast(toast);
+        });
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            this.removeToast(toast);
+        }, 4000);
+    }
+
+    removeToast(toast) {
+        toast.style.animation = 'toastSlideOut 0.3s ease-out';
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+        }, 300);
+    }
+
+    // Confirmation Dialog
+    showConfirm(message, title = 'Confirm Action') {
+        return new Promise((resolve) => {
+            const dialog = document.getElementById('confirmDialog');
+            const titleEl = document.getElementById('confirmTitle');
+            const messageEl = document.getElementById('confirmMessage');
+            const okBtn = document.getElementById('confirmOk');
+            const cancelBtn = document.getElementById('confirmCancel');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            dialog.classList.remove('hidden');
+            
+            const handleOk = () => {
+                dialog.classList.add('hidden');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+                resolve(true);
+            };
+            
+            const handleCancel = () => {
+                dialog.classList.add('hidden');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+                resolve(false);
+            };
+            
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+            
+            // Close on escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    handleCancel();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        });
+    }
+
+    // Auto-save indicator
+    showSaveIndicator() {
+        let indicator = document.querySelector('.save-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'save-indicator';
+            indicator.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>Saving...</span>
+            `;
+            document.body.appendChild(indicator);
+        }
+        
+        indicator.classList.add('show');
+        
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+        
+        this.saveTimeout = setTimeout(() => {
+            indicator.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Saved</span>
+            `;
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 1000);
+        }, 500);
     }
 
     // Data Management
@@ -201,6 +338,9 @@ class FiTrackApp {
                 ...exercise,
                 sets: [this.createEmptySet()]
             });
+            this.showToast(`${exercise.name} added to workout`, 'success');
+        } else {
+            this.showToast(`${exercise.name} is already in your workout`, 'info');
         }
 
         this.clearSearch();
@@ -217,9 +357,18 @@ class FiTrackApp {
         };
     }
 
-    removeExercise(index) {
-        this.currentWorkout.splice(index, 1);
-        this.updateUI();
+    async removeExercise(index) {
+        const exercise = this.currentWorkout[index];
+        const confirmed = await this.showConfirm(
+            `Are you sure you want to remove "${exercise.name}" from your workout?`,
+            'Remove Exercise'
+        );
+        
+        if (confirmed) {
+            this.currentWorkout.splice(index, 1);
+            this.showToast(`${exercise.name} removed from workout`, 'success');
+            this.updateUI();
+        }
     }
 
     addSet(exerciseIndex) {
@@ -269,8 +418,8 @@ class FiTrackApp {
                         <small>${exercise.category} • ${exercise.equipment}</small>
                     </div>
                     <div class="exercise-actions">
-                        <button class="btn-icon" onclick="app.removeExercise(${exIndex})" title="Remove">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <button class="btn-icon" onclick="app.removeExercise(${exIndex})" title="Remove exercise" aria-label="Remove ${exercise.name} from workout">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -284,18 +433,22 @@ class FiTrackApp {
                         <div class="set-row">
                             <div class="set-number">${setIndex + 1}</div>
                             <div class="set-input">
-                                <label>Weight</label>
+                                <label>Weight (kg)</label>
                                 <input type="number" 
                                     value="${set.weight}" 
                                     placeholder="0"
                                     step="0.5"
+                                    min="0"
+                                    max="999"
+                                    inputmode="decimal"
+                                    aria-label="Weight in kilograms"
                                     onchange="app.updateSet(${exIndex}, ${setIndex}, 'weight', this.value)">
                             </div>
                             <div class="set-input">
                                 <label>
                                     ${set.useTime ? 'Time' : 'Reps'}
-                                    <button class="toggle-type-btn" onclick="app.toggleSetInputType(${exIndex}, ${setIndex})" title="Toggle between reps and time">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <button class="toggle-type-btn" onclick="app.toggleSetInputType(${exIndex}, ${setIndex})" title="Toggle between reps and time" aria-label="Switch to ${set.useTime ? 'reps' : 'time'} tracking">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <polyline points="17 1 21 5 17 9"></polyline>
                                             <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
                                             <polyline points="7 23 3 19 7 15"></polyline>
@@ -307,17 +460,24 @@ class FiTrackApp {
                                     `<input type="text" 
                                         value="${set.time}" 
                                         placeholder="0:00"
+                                        pattern="[0-9]{1,2}:[0-5][0-9]"
+                                        aria-label="Time in minutes and seconds"
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'time', this.value)">` :
                                     `<input type="number" 
                                         value="${set.reps}" 
                                         placeholder="0"
+                                        min="0"
+                                        max="999"
+                                        inputmode="numeric"
+                                        aria-label="Number of repetitions"
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'reps', this.value)">`
                                 }
                             </div>
                             <button class="set-complete ${set.completed ? 'completed' : ''}" 
                                 onclick="app.toggleSetComplete(${exIndex}, ${setIndex})"
-                                title="${set.completed ? 'Mark incomplete' : 'Mark complete'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                title="${set.completed ? 'Mark incomplete' : 'Mark complete'}"
+                                aria-label="${set.completed ? 'Mark set incomplete' : 'Mark set complete'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                             </button>
@@ -363,11 +523,12 @@ class FiTrackApp {
         }
 
         this.saveData();
+        this.showSaveIndicator();
     }
 
-    finishWorkout() {
+    async finishWorkout() {
         if (this.currentWorkout.length === 0) {
-            alert('No exercises to save!');
+            this.showToast('No exercises to save!', 'warning');
             return;
         }
 
@@ -375,14 +536,17 @@ class FiTrackApp {
         this.saveCurrentWorkout();
 
         // Ask if user wants to clear the workout
-        const shouldClear = confirm('Workout saved to history! Would you like to start a new workout?');
+        const shouldClear = await this.showConfirm(
+            'Workout saved to history! Would you like to start a new workout?',
+            'Workout Complete'
+        );
         
         if (shouldClear) {
             this.currentWorkout = [];
             this.updateUI();
-            alert('Workout cleared. Ready for your next session!');
+            this.showToast('Workout cleared. Ready for your next session!', 'success');
         } else {
-            alert('Workout saved! You can continue editing or start a new workout.');
+            this.showToast('Workout saved! You can continue editing.', 'success');
         }
     }
 
