@@ -436,6 +436,8 @@ body {
     position: relative;
     overflow: hidden;
     margin-bottom: 0.5rem;
+    background: var(--danger-color);
+    border-radius: 8px;
 }
 
 .set-row {
@@ -599,7 +601,7 @@ body {
     top: 0;
     bottom: 0;
     width: 80px;
-    background: var(--danger-color);
+    background: transparent;
     color: white;
     border: none;
     display: flex;
