@@ -445,10 +445,11 @@ body {
     grid-template-columns: 30px 1fr 1fr auto;
     gap: 0.5rem;
     align-items: end;
-    position: relative;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
     background: var(--card-bg);
-    transition: transform 0.3s ease;
-    touch-action: pan-y;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .set-number {
@@ -580,63 +581,40 @@ body {
     align-items: center;
 }
 
-.set-move-btn {
+.set-delete-btn {
     min-width: 36px;
     min-height: 36px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--input-bg);
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
+    padding: 0;
     color: var(--text-secondary);
 }
 
-.set-delete-btn-swipe {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 80px;
-    background: transparent;
+.set-delete-btn:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
     color: white;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: background 0.2s;
 }
 
-.set-delete-btn-swipe:active {
-    background: #dc2626;
-}
-
-.set-delete-btn-swipe svg {
-    width: 20px;
-    height: 20px;
+.set-delete-btn:active {
+    transform: scale(0.95);
 }
 
 @media (hover: none) {
     /* Larger touch targets on touch devices */
-    .set-move-btn {
+    .set-complete,
+    .set-delete-btn {
         min-width: 44px;
         min-height: 44px;
     }
 }
 
-.set-move-btn:hover {
-    background: var(--hover-bg);
-    color: var(--primary-color);
-    border-color: var(--primary-color);
-}
 
 .add-set-btn {
     width: 100%;
@@ -1790,7 +1768,7 @@ input:focus-visible {
 .floating-workout-btn {
     position: fixed;
     bottom: 100px;
-    right: 1.5rem;
+    left: 1.5rem;
     z-index: 85;
     background: var(--primary-color);
     color: white;
@@ -2242,7 +2220,7 @@ input:focus-visible {
 @media (max-width: 768px) {
     .floating-workout-btn {
         bottom: 4rem;
-        right: 1rem;
+        left: 1rem;
         padding: 0.75rem 1.25rem;
         font-size: 0.9rem;
     }

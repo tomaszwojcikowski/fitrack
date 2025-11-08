@@ -919,17 +919,16 @@ class FiTrackApp {
                                         <polyline points="20 6 9 17 4 12"></polyline>
                                     </svg>
                                 </button>
+                                <button class="set-delete-btn" 
+                                    onclick="app.deleteSet(${exIndex}, ${setIndex})"
+                                    title="Delete set"
+                                    aria-label="Delete set ${setIndex + 1}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
                             </div>
-                            <button class="set-delete-btn-swipe" 
-                                onclick="app.deleteSet(${exIndex}, ${setIndex})"
-                                title="Delete set"
-                                aria-label="Delete set">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                Delete
-                            </button>
                         </div>
                     `).join('')}
                 </div>
@@ -945,9 +944,6 @@ class FiTrackApp {
 
         // Setup drag and drop for exercises
         this.setupExerciseDragAndDrop();
-
-        // Setup swipe to delete for sets
-        this.setupSwipeToDelete();
 
         // Save workout automatically
         this.saveCurrentWorkout();
@@ -1000,77 +996,6 @@ class FiTrackApp {
                 if (draggedElement !== card) {
                     const dropIndex = parseInt(card.getAttribute('data-exercise-index'));
                     this.moveExercise(draggedIndex, dropIndex);
-                }
-            });
-        });
-    }
-
-    setupSwipeToDelete() {
-        const setWrappers = document.querySelectorAll('.set-row-wrapper');
-        
-        setWrappers.forEach(wrapper => {
-            let startX = 0;
-            let currentX = 0;
-            let isDragging = false;
-            const setRow = wrapper.querySelector('.set-row');
-            
-            const handleStart = (e) => {
-                // Get touch or mouse position
-                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                currentX = startX;
-                isDragging = true;
-                setRow.style.transition = 'none';
-            };
-            
-            const handleMove = (e) => {
-                if (!isDragging) return;
-                
-                e.preventDefault();
-                currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const diff = currentX - startX;
-                
-                // Only allow left swipe
-                if (diff < 0) {
-                    const maxSwipe = -80;
-                    const swipeAmount = Math.max(diff, maxSwipe);
-                    setRow.style.transform = `translateX(${swipeAmount}px)`;
-                }
-            };
-            
-            const handleEnd = (e) => {
-                if (!isDragging) return;
-                
-                isDragging = false;
-                setRow.style.transition = 'transform 0.3s ease';
-                
-                const diff = currentX - startX;
-                
-                // If swiped more than 40px to the left, reveal delete button
-                if (diff < -40) {
-                    setRow.style.transform = 'translateX(-80px)';
-                    wrapper.classList.add('delete-revealed');
-                } else {
-                    setRow.style.transform = 'translateX(0)';
-                    wrapper.classList.remove('delete-revealed');
-                }
-            };
-            
-            // Touch events
-            wrapper.addEventListener('touchstart', handleStart, { passive: true });
-            wrapper.addEventListener('touchmove', handleMove, { passive: false });
-            wrapper.addEventListener('touchend', handleEnd, { passive: true });
-            
-            // Mouse events for testing on desktop
-            wrapper.addEventListener('mousedown', handleStart);
-            wrapper.addEventListener('mousemove', handleMove);
-            wrapper.addEventListener('mouseup', handleEnd);
-            wrapper.addEventListener('mouseleave', handleEnd);
-            
-            // Close swipe when clicking elsewhere
-            document.addEventListener('click', (e) => {
-                if (!wrapper.contains(e.target) && wrapper.classList.contains('delete-revealed')) {
-                    setRow.style.transform = 'translateX(0)';
-                    wrapper.classList.remove('delete-revealed');
                 }
             });
         });
