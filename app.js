@@ -381,9 +381,7 @@ class FiTrackApp {
 
         if (startCustomBtn) {
             startCustomBtn.addEventListener('click', () => {
-                if (!this.activeProgram) {
-                    this.hideWelcomeSection();
-                }
+                this.hideWelcomeSection();
             });
         }
 
@@ -820,7 +818,7 @@ class FiTrackApp {
                         </svg>
                     </button>
                     <div class="exercise-title">
-                        <h3>${exercise.name}</h3>
+                        <h3 class="exercise-name-clickable" onclick="app.showExerciseHistory('${exercise.name.replace(/'/g, "\\'")}')" title="View history for ${exercise.name}">${exercise.name}</h3>
                         <small>${exercise.category} • ${exercise.equipment}</small>
                     </div>
                     <div class="exercise-actions">
@@ -1795,6 +1793,97 @@ class FiTrackApp {
 
         // If all days are completed, show congratulations
         this.showToast('🎉 Congratulations! You\'ve completed the entire program!', 'success');
+    }
+
+    showExerciseHistory(exerciseName) {
+        // Get all history for this exercise
+        const exerciseHistory = [];
+        
+        this.workoutHistory.forEach(workout => {
+            const exercise = workout.exercises.find(ex => ex.name === exerciseName);
+            if (exercise && exercise.sets && exercise.sets.length > 0) {
+                exerciseHistory.push({
+                    date: workout.date,
+                    sets: exercise.sets
+                });
+            }
+        });
+
+        if (exerciseHistory.length === 0) {
+            this.showToast(`No history found for ${exerciseName}`, 'info');
+            return;
+        }
+
+        // Create modal to show history
+        const modal = document.createElement('div');
+        modal.className = 'exercise-history-modal';
+        modal.innerHTML = `
+            <div class="exercise-history-content">
+                <div class="exercise-history-header">
+                    <h2>📊 ${exerciseName}</h2>
+                    <button class="close-btn" aria-label="Close">&times;</button>
+                </div>
+                <div class="exercise-history-body">
+                    <div class="exercise-history-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${exerciseHistory.length}</div>
+                            <div class="stat-label">Workouts</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${exerciseHistory.reduce((sum, h) => sum + h.sets.length, 0)}</div>
+                            <div class="stat-label">Total Sets</div>
+                        </div>
+                    </div>
+                    <div class="exercise-history-list">
+                        ${exerciseHistory.map(history => {
+                            const date = new Date(history.date + 'T00:00:00');
+                            const dateStr = date.toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            
+                            return `
+                                <div class="history-entry">
+                                    <div class="history-entry-date">${dateStr}</div>
+                                    <div class="history-entry-sets">
+                                        ${history.sets.map((set, idx) => `
+                                            <div class="history-entry-set">
+                                                <span class="set-num">Set ${idx + 1}:</span>
+                                                ${set.weight ? `<span class="set-weight">${set.weight} kg</span>` : ''}
+                                                ${set.reps ? `<span class="set-reps">× ${set.reps} reps</span>` : ''}
+                                                ${set.time ? `<span class="set-time">${set.time}</span>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="exercise-history-footer">
+                    <button class="btn btn-primary close-history-btn">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close handlers
+        const closeModal = () => {
+            modal.classList.add('fade-out');
+            setTimeout(() => document.body.removeChild(modal), 300);
+        };
+
+        modal.querySelector('.close-btn').addEventListener('click', closeModal);
+        modal.querySelector('.close-history-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Animate in
+        setTimeout(() => modal.classList.add('show'), 10);
     }
 }
 
