@@ -12,8 +12,8 @@ describe('Workout Programs', () => {
   })
 
   describe('Program Data Structure', () => {
-    it('should have 4 predefined programs', () => {
-      expect(WORKOUT_PROGRAMS).toHaveLength(4)
+    it('should have 5 predefined programs', () => {
+      expect(WORKOUT_PROGRAMS).toHaveLength(5)
     })
 
     it('should have properly structured programs', () => {
@@ -26,7 +26,8 @@ describe('Workout Programs', () => {
         expect(program).toHaveProperty('difficulty')
         expect(program).toHaveProperty('goal')
         expect(program).toHaveProperty('weeks')
-        expect(program.weeks).toHaveLength(4)
+        expect(program.weeks.length).toBeGreaterThan(0)
+        expect(program.weeks).toHaveLength(program.duration)
       })
     })
 
@@ -231,7 +232,7 @@ describe('Workout Programs', () => {
   describe('Program Integration', () => {
     it('should have all programs available in app', () => {
       expect(app.programs).toEqual(WORKOUT_PROGRAMS)
-      expect(app.programs).toHaveLength(4)
+      expect(app.programs).toHaveLength(5)
     })
 
     it('should load different programs correctly', async () => {
@@ -259,6 +260,62 @@ describe('Workout Programs', () => {
       expect(plankExercise).toBeDefined()
       expect(plankExercise.sets[0].useTime).toBe(true)
       expect(plankExercise.sets[0].time).toBe('60s')
+    })
+  })
+
+  describe('20-Week Integrated Strength Program', () => {
+    it('should have 20-week program with correct structure', () => {
+      const program = WORKOUT_PROGRAMS.find(p => p.id === 'integrated-strength-20week')
+      expect(program).toBeDefined()
+      expect(program.duration).toBe(20)
+      expect(program.daysPerWeek).toBe(3)
+      expect(program.difficulty).toBe('Advanced')
+      expect(program.weeks).toHaveLength(20)
+    })
+
+    it('should have blocks structure', () => {
+      const program = WORKOUT_PROGRAMS.find(p => p.id === 'integrated-strength-20week')
+      expect(program.blocks).toBeDefined()
+      expect(program.blocks).toHaveLength(5)
+      
+      program.blocks.forEach(block => {
+        expect(block).toHaveProperty('blockNumber')
+        expect(block).toHaveProperty('name')
+        expect(block).toHaveProperty('weeks')
+        expect(block).toHaveProperty('goals')
+        expect(block).toHaveProperty('skillA')
+        expect(block).toHaveProperty('skillB')
+      })
+    })
+
+    it('should have weeks with block numbers', () => {
+      const program = WORKOUT_PROGRAMS.find(p => p.id === 'integrated-strength-20week')
+      program.weeks.forEach(week => {
+        expect(week).toHaveProperty('week')
+        expect(week).toHaveProperty('blockNumber')
+        expect(week).toHaveProperty('days')
+        expect(week.blockNumber).toBeGreaterThan(0)
+        expect(week.blockNumber).toBeLessThanOrEqual(5)
+      })
+    })
+
+    it('should have days with workout types', () => {
+      const program = WORKOUT_PROGRAMS.find(p => p.id === 'integrated-strength-20week')
+      const firstWeek = program.weeks[0]
+      
+      firstWeek.days.forEach(day => {
+        expect(day).toHaveProperty('workoutType')
+        expect(['A', 'B', 'C', 'Test']).toContain(day.workoutType)
+      })
+    })
+
+    it('should have phases in workout days', () => {
+      const program = WORKOUT_PROGRAMS.find(p => p.id === 'integrated-strength-20week')
+      const firstDay = program.weeks[0].days[0]
+      
+      expect(firstDay).toHaveProperty('phases')
+      expect(firstDay.phases).toBeDefined()
+      expect(firstDay.phases.length).toBeGreaterThan(0)
     })
   })
 })
