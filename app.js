@@ -858,9 +858,9 @@ class FiTrackApp {
                                 ${set.useTime ? 
                                     `<input type="text" 
                                         value="${set.time}" 
-                                        placeholder="0:00"
-                                        pattern="[0-9]{1,2}:[0-5][0-9]"
-                                        aria-label="Time in minutes and seconds"
+                                        placeholder="0:30 or 30s"
+                                        pattern="([0-9]{1,2}:[0-5][0-9]|[0-9]{1,3}s?)"
+                                        aria-label="Time in minutes:seconds or seconds"
                                         onchange="app.updateSet(${exIndex}, ${setIndex}, 'time', this.value)">` :
                                     `<input type="number" 
                                         value="${set.reps}" 
