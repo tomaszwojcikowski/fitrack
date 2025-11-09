@@ -4,6 +4,10 @@ import { WORKOUT_PROGRAMS } from './programs.js';
 import { SimpleSyncService } from './services/simpleSyncService.js';
 import { renderExerciseCard } from './components/exerciseCard.js';
 import { renderModalExerciseItem } from './components/exercisePickerModal.js';
+import { Dashboard } from './components/dashboard.js';
+import { StatsCalculator } from './src/statsCalculator.js';
+import { prDetector } from './src/prDetection.js';
+import { DataExporter } from './src/dataExport.js';
 
 class FiTrackApp {
     constructor() {
@@ -27,6 +31,16 @@ class FiTrackApp {
         this.workoutDurationInterval = null;
         this.lastWeightSuggestions = {};
         
+        // Phase 3 features
+        this.dashboard = new Dashboard(this);
+        this.currentCalendarMonth = new Date().getMonth();
+        this.currentCalendarYear = new Date().getFullYear();
+        this.historyViewMode = 'list'; // 'list' or 'calendar'
+        this.historyFilters = {
+            search: '',
+            dateRange: 'all'
+        };
+        
         this.init();
     }
 
@@ -49,7 +63,9 @@ class FiTrackApp {
         const hash = window.location.hash.slice(1); // Remove the '#'
         
         // Navigate based on hash
-        if (hash === 'history') {
+        if (hash === 'dashboard') {
+            this.showDashboard();
+        } else if (hash === 'history') {
             this.showHistory();
         } else if (hash === 'programs') {
             this.showPrograms();
@@ -396,6 +412,113 @@ class FiTrackApp {
 
     // Event Listeners
     setupEventListeners() {
+        // Navigation
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener('click', () => this.showDashboard());
+        }
+        
+        const backToWorkoutFromDashboard = document.getElementById('backToWorkoutFromDashboard');
+        if (backToWorkoutFromDashboard) {
+            backToWorkoutFromDashboard.addEventListener('click', () => this.showWorkout());
+        }
+        
+        // Dashboard interactions
+        const prevWeek = document.getElementById('prevWeek');
+        if (prevWeek) {
+            prevWeek.addEventListener('click', () => {
+                this.dashboard.navigateToPrevWeek();
+            });
+        }
+        
+        const nextWeek = document.getElementById('nextWeek');
+        if (nextWeek) {
+            nextWeek.addEventListener('click', () => {
+                this.dashboard.navigateToNextWeek();
+            });
+        }
+        
+        const exerciseChartSelect = document.getElementById('exerciseChartSelect');
+        if (exerciseChartSelect) {
+            exerciseChartSelect.addEventListener('change', (e) => {
+                this.dashboard.handleExerciseSelection(e.target.value);
+            });
+        }
+        
+        const startWorkoutFromDash = document.getElementById('startWorkoutFromDash');
+        if (startWorkoutFromDash) {
+            startWorkoutFromDash.addEventListener('click', () => this.showWorkout());
+        }
+        
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', () => this.showExportModal());
+        }
+        
+        const viewAllPRs = document.getElementById('viewAllPRs');
+        if (viewAllPRs) {
+            viewAllPRs.addEventListener('click', () => this.showAllPRsModal());
+        }
+        
+        // Export modal handlers
+        this.setupExportModal();
+        
+        // PR celebration modal handlers
+        this.setupPRCelebrationModal();
+        
+        // All PRs modal handlers
+        this.setupAllPRsModal();
+        
+        // History view mode toggle
+        const listViewBtn = document.getElementById('listViewBtn');
+        if (listViewBtn) {
+            listViewBtn.addEventListener('click', () => this.switchHistoryView('list'));
+        }
+        
+        const calendarViewBtn = document.getElementById('calendarViewBtn');
+        if (calendarViewBtn) {
+            calendarViewBtn.addEventListener('click', () => this.switchHistoryView('calendar'));
+        }
+        
+        // History filters
+        const historySearch = document.getElementById('historySearch');
+        if (historySearch) {
+            historySearch.addEventListener('input', (e) => {
+                this.historyFilters.search = e.target.value;
+                this.renderHistoryWithFilters();
+                document.getElementById('clearHistorySearch').classList.toggle('hidden', !e.target.value);
+            });
+        }
+        
+        const clearHistorySearch = document.getElementById('clearHistorySearch');
+        if (clearHistorySearch) {
+            clearHistorySearch.addEventListener('click', () => {
+                document.getElementById('historySearch').value = '';
+                this.historyFilters.search = '';
+                this.renderHistoryWithFilters();
+                clearHistorySearch.classList.add('hidden');
+            });
+        }
+        
+        const dateRangeFilter = document.getElementById('dateRangeFilter');
+        if (dateRangeFilter) {
+            dateRangeFilter.addEventListener('change', (e) => {
+                this.historyFilters.dateRange = e.target.value;
+                this.renderHistoryWithFilters();
+            });
+        }
+        
+        // Calendar navigation
+        const prevMonth = document.getElementById('prevMonth');
+        if (prevMonth) {
+            prevMonth.addEventListener('click', () => this.navigateToPrevMonth());
+        }
+        
+        const nextMonth = document.getElementById('nextMonth');
+        if (nextMonth) {
+            nextMonth.addEventListener('click', () => this.navigateToNextMonth());
+        }
+        
         // Exercise search
         const searchInput = document.getElementById('exerciseSearch');
         searchInput.addEventListener('input', (e) => {
@@ -1239,6 +1362,9 @@ class FiTrackApp {
                 sets: ex.sets.filter(s => s.reps || s.weight || s.time) // Only save non-empty sets
             }))
         };
+        
+        // Check for PRs (only when finishing workout, not on auto-save)
+        const isNewWorkout = existingIndex < 0;
 
         if (existingIndex >= 0) {
             this.workoutHistory[existingIndex] = workoutData;
@@ -1248,6 +1374,8 @@ class FiTrackApp {
 
         this.saveData();
         this.showSaveIndicator();
+        
+        return { workoutData, isNewWorkout };
     }
 
     async finishWorkout() {
@@ -1259,8 +1387,14 @@ class FiTrackApp {
         // Stop duration timer and get total duration
         const totalDuration = this.stopWorkoutDurationTimer();
 
-        // Save the current workout
-        this.saveCurrentWorkout();
+        // Save the current workout and check for PRs
+        const saveResult = this.saveCurrentWorkout();
+        
+        // Check for PRs when finishing workout
+        let prs = [];
+        if (saveResult && saveResult.workoutData) {
+            prs = this.checkForPRs(saveResult.workoutData);
+        }
 
         // Mark current program day as completed if in a program
         if (this.activeProgram) {
@@ -1274,10 +1408,18 @@ class FiTrackApp {
         // Ask if user wants to clear the workout
         const minutes = Math.floor(totalDuration / 60);
         const durationText = minutes > 0 ? ` (${minutes} min)` : '';
+        const prText = prs.length > 0 ? ` 🏆 ${prs.length} PR${prs.length > 1 ? 's' : ''}!` : '';
         const shouldClear = await this.showConfirm(
-            `Workout saved to history!${durationText} Would you like to start a new workout?`,
+            `Workout saved to history!${durationText}${prText} Would you like to start a new workout?`,
             'Workout Complete'
         );
+        
+        // Show PR celebration if any PRs were achieved
+        if (prs.length > 0) {
+            setTimeout(() => {
+                this.showPRCelebration(prs);
+            }, 300);
+        }
         
         if (shouldClear) {
             this.currentWorkout = [];
@@ -2500,6 +2642,379 @@ class FiTrackApp {
                typeof data === 'object' &&
                'version' in data &&
                Array.isArray(data.workouts);
+    }
+
+    // ===== Phase 3: Dashboard & Visualization Methods =====
+    
+    showDashboard() {
+        // Hide all views
+        document.getElementById('workoutView').classList.remove('active');
+        document.getElementById('historyView').classList.remove('active');
+        document.getElementById('programsView').classList.remove('active');
+        const settingsView = document.getElementById('settingsView');
+        if (settingsView) settingsView.classList.remove('active');
+        
+        // Show dashboard
+        document.getElementById('dashboardView').classList.add('active');
+        window.location.hash = 'dashboard';
+        
+        // Render dashboard content
+        this.dashboard.render();
+        this.updateCurrentWorkoutButton();
+    }
+
+    setupExportModal() {
+        const modal = document.getElementById('exportModal');
+        const closeBtn = document.getElementById('closeExportModal');
+        const overlay = modal.querySelector('.modal-overlay');
+        
+        const closeModal = () => {
+            modal.classList.add('hidden');
+        };
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+        
+        const exportJSON = document.getElementById('exportJSON');
+        if (exportJSON) {
+            exportJSON.addEventListener('click', () => {
+                const exporter = new DataExporter(this.workoutHistory, this.activeProgram);
+                exporter.exportJSON();
+                this.showToast('Data exported as JSON', 'success');
+                closeModal();
+            });
+        }
+        
+        const exportCSV = document.getElementById('exportCSV');
+        if (exportCSV) {
+            exportCSV.addEventListener('click', () => {
+                const exporter = new DataExporter(this.workoutHistory, this.activeProgram);
+                exporter.exportCSV();
+                this.showToast('Data exported as CSV', 'success');
+                closeModal();
+            });
+        }
+    }
+
+    showExportModal() {
+        document.getElementById('exportModal').classList.remove('hidden');
+    }
+
+    setupPRCelebrationModal() {
+        const modal = document.getElementById('prCelebrationModal');
+        const closeBtn = document.getElementById('closePRCelebration');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+        }
+    }
+
+    showPRCelebration(prs) {
+        const modal = document.getElementById('prCelebrationModal');
+        const list = document.getElementById('prCelebrationList');
+        
+        list.innerHTML = prs.map(pr => `
+            <div class="pr-celebration-item">
+                <div class="pr-celebration-exercise">${pr.exercise || 'Exercise'}</div>
+                <div class="pr-celebration-detail">${prDetector.formatPR(pr)}</div>
+                <div class="pr-description">${prDetector.getPRDescription(pr)}</div>
+            </div>
+        `).join('');
+        
+        modal.classList.remove('hidden');
+    }
+
+    setupAllPRsModal() {
+        const modal = document.getElementById('allPRsModal');
+        const closeBtn = document.getElementById('closeAllPRsModal');
+        const overlay = modal.querySelector('.modal-overlay');
+        
+        const closeModal = () => {
+            modal.classList.add('hidden');
+        };
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+        
+        const prSearch = document.getElementById('prSearch');
+        if (prSearch) {
+            prSearch.addEventListener('input', (e) => {
+                this.renderAllPRsList(e.target.value);
+            });
+        }
+    }
+
+    showAllPRsModal() {
+        document.getElementById('allPRsModal').classList.remove('hidden');
+        this.renderAllPRsList('');
+    }
+
+    renderAllPRsList(searchTerm = '') {
+        const list = document.getElementById('allPRsList');
+        const allPRs = prDetector.getAllPRs();
+        
+        const filtered = searchTerm 
+            ? allPRs.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            : allPRs;
+        
+        if (filtered.length === 0) {
+            list.innerHTML = '<p class="empty-state">No PRs found</p>';
+            return;
+        }
+        
+        list.innerHTML = filtered.map(exercise => `
+            <div class="all-prs-exercise">
+                <div class="all-prs-exercise-name">${exercise.name}</div>
+                <div class="all-prs-records">
+                    ${exercise.records.map(record => {
+                        const date = new Date(record.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        return `
+                            <div class="all-prs-record">
+                                <div>
+                                    <div class="all-prs-record-type">${prDetector.getPRDescription(record)}</div>
+                                    <div class="all-prs-record-value">${prDetector.formatPR(record)}</div>
+                                </div>
+                                <div class="all-prs-record-date">${date}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Check for PRs when finishing workout
+    checkForPRs(workout) {
+        const allPRs = [];
+        
+        workout.exercises.forEach(exercise => {
+            exercise.sets.forEach(set => {
+                const prs = prDetector.checkAndUpdatePR(exercise.name, set, workout.date);
+                if (prs.length > 0) {
+                    prs.forEach(pr => {
+                        allPRs.push({
+                            exercise: exercise.name,
+                            ...pr
+                        });
+                    });
+                }
+            });
+        });
+        
+        return allPRs;
+    }
+
+    // Enhanced history view
+    switchHistoryView(mode) {
+        this.historyViewMode = mode;
+        
+        const listViewBtn = document.getElementById('listViewBtn');
+        const calendarViewBtn = document.getElementById('calendarViewBtn');
+        const listView = document.getElementById('historyListView');
+        const calendarView = document.getElementById('historyCalendarView');
+        
+        if (mode === 'list') {
+            listViewBtn.classList.add('active');
+            calendarViewBtn.classList.remove('active');
+            listView.classList.remove('hidden');
+            calendarView.classList.add('hidden');
+            this.renderHistoryWithFilters();
+        } else {
+            listViewBtn.classList.remove('active');
+            calendarViewBtn.classList.add('active');
+            listView.classList.add('hidden');
+            calendarView.classList.remove('hidden');
+            this.renderCalendarView();
+        }
+    }
+
+    renderHistoryWithFilters() {
+        const container = document.getElementById('historyListView');
+        let filtered = [...this.workoutHistory];
+        
+        // Apply search filter
+        if (this.historyFilters.search) {
+            const searchLower = this.historyFilters.search.toLowerCase();
+            filtered = filtered.filter(workout => 
+                workout.exercises.some(ex => 
+                    ex.name.toLowerCase().includes(searchLower)
+                )
+            );
+        }
+        
+        // Apply date range filter
+        if (this.historyFilters.dateRange !== 'all') {
+            const days = parseInt(this.historyFilters.dateRange);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - days);
+            filtered = filtered.filter(workout => {
+                const workoutDate = new Date(workout.date + 'T00:00:00');
+                return workoutDate >= cutoffDate;
+            });
+        }
+        
+        if (filtered.length === 0) {
+            container.innerHTML = '<p class="empty-state">No workouts match your filters</p>';
+            return;
+        }
+        
+        container.innerHTML = filtered.map(workout => {
+            const date = new Date(workout.date + 'T00:00:00');
+            const dateStr = date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+
+            return `
+                <div class="history-card">
+                    <div class="history-date">${dateStr}</div>
+                    ${workout.exercises.map(ex => `
+                        <div class="history-exercise">
+                            <div class="history-exercise-name">${ex.name}</div>
+                            <div class="history-sets">
+                                ${ex.sets.map((set, index) => `
+                                    <div class="history-set">
+                                        Set ${index + 1}: 
+                                        ${set.reps ? `${set.reps} reps` : ''}
+                                        ${set.weight ? ` × ${set.weight} kg` : ''}
+                                        ${set.time ? ` • ${set.time}` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderCalendarView() {
+        const stats = new StatsCalculator(this.workoutHistory);
+        const calendar = stats.getMonthlyCalendar(this.currentCalendarYear, this.currentCalendarMonth);
+        const grid = document.getElementById('calendarGrid');
+        
+        // Update month label
+        const monthLabel = document.getElementById('monthLabel');
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        monthLabel.textContent = `${monthNames[this.currentCalendarMonth]} ${this.currentCalendarYear}`;
+        
+        // Day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const headerRow = dayHeaders.map(day => 
+            `<div class="calendar-day-header">${day}</div>`
+        ).join('');
+        
+        // Calendar days
+        const daysHTML = calendar.flatMap(week => 
+            week.map(day => {
+                if (!day.date) {
+                    return '<div class="calendar-day empty"></div>';
+                }
+                
+                return `
+                    <div class="calendar-day ${day.workoutCount > 0 ? 'has-workout' : ''} ${day.isToday ? 'today' : ''}"
+                         data-date="${day.date}">
+                        <div class="calendar-day-number">${day.day}</div>
+                        ${day.workoutCount > 0 ? `<div class="calendar-workout-badge">${day.workoutCount}</div>` : ''}
+                    </div>
+                `;
+            })
+        ).join('');
+        
+        grid.innerHTML = headerRow + daysHTML;
+        
+        // Add click handlers
+        grid.querySelectorAll('.calendar-day[data-date]').forEach(dayEl => {
+            dayEl.addEventListener('click', () => {
+                const date = dayEl.getAttribute('data-date');
+                this.showWorkoutDetailModal(date);
+            });
+        });
+    }
+
+    navigateToPrevMonth() {
+        this.currentCalendarMonth--;
+        if (this.currentCalendarMonth < 0) {
+            this.currentCalendarMonth = 11;
+            this.currentCalendarYear--;
+        }
+        this.renderCalendarView();
+    }
+
+    navigateToNextMonth() {
+        this.currentCalendarMonth++;
+        if (this.currentCalendarMonth > 11) {
+            this.currentCalendarMonth = 0;
+            this.currentCalendarYear++;
+        }
+        this.renderCalendarView();
+    }
+
+    showWorkoutDetailModal(date) {
+        const workouts = this.workoutHistory.filter(w => w.date === date);
+        
+        if (workouts.length === 0) return;
+        
+        const modal = document.getElementById('workoutDetailModal');
+        const body = document.getElementById('workoutDetailBody');
+        const title = document.getElementById('workoutDetailTitle');
+        
+        const dateObj = new Date(date + 'T00:00:00');
+        const dateStr = dateObj.toLocaleDateString('en-US', { 
+            weekday: 'long',
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        title.textContent = dateStr;
+        
+        body.innerHTML = workouts.map(workout => `
+            ${workout.exercises.map(ex => `
+                <div class="workout-detail-exercise">
+                    <div class="workout-detail-exercise-name">${ex.name}</div>
+                    <div class="workout-detail-sets">
+                        ${ex.sets.map((set, index) => `
+                            <div class="workout-detail-set">
+                                Set ${index + 1}: 
+                                ${set.reps ? `${set.reps} reps` : ''}
+                                ${set.weight ? ` × ${set.weight} kg` : ''}
+                                ${set.time ? ` • ${set.time}` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        `).join('');
+        
+        modal.classList.remove('hidden');
+        
+        // Setup close handler
+        const closeBtn = document.getElementById('closeWorkoutDetail');
+        const overlay = modal.querySelector('.modal-overlay');
+        
+        const closeModal = () => {
+            modal.classList.add('hidden');
+        };
+        
+        if (closeBtn) {
+            closeBtn.removeEventListener('click', closeModal);
+            closeBtn.addEventListener('click', closeModal);
+        }
+        
+        if (overlay) {
+            overlay.removeEventListener('click', closeModal);
+            overlay.addEventListener('click', closeModal);
+        }
     }
 }
 
