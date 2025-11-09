@@ -2647,6 +2647,9 @@ class FiTrackApp {
     // ===== Phase 3: Dashboard & Visualization Methods =====
     
     showDashboard() {
+        const dashboardView = document.getElementById('dashboardView');
+        if (!dashboardView) return; // Guard for tests
+        
         // Hide all views
         document.getElementById('workoutView').classList.remove('active');
         document.getElementById('historyView').classList.remove('active');
@@ -2655,7 +2658,7 @@ class FiTrackApp {
         if (settingsView) settingsView.classList.remove('active');
         
         // Show dashboard
-        document.getElementById('dashboardView').classList.add('active');
+        dashboardView.classList.add('active');
         window.location.hash = 'dashboard';
         
         // Render dashboard content
@@ -2665,6 +2668,8 @@ class FiTrackApp {
 
     setupExportModal() {
         const modal = document.getElementById('exportModal');
+        if (!modal) return; // Guard for tests
+        
         const closeBtn = document.getElementById('closeExportModal');
         const overlay = modal.querySelector('.modal-overlay');
         
@@ -2702,6 +2707,8 @@ class FiTrackApp {
 
     setupPRCelebrationModal() {
         const modal = document.getElementById('prCelebrationModal');
+        if (!modal) return; // Guard for tests
+        
         const closeBtn = document.getElementById('closePRCelebration');
         
         if (closeBtn) {
@@ -2728,6 +2735,8 @@ class FiTrackApp {
 
     setupAllPRsModal() {
         const modal = document.getElementById('allPRsModal');
+        if (!modal) return; // Guard for tests
+        
         const closeBtn = document.getElementById('closeAllPRsModal');
         const overlay = modal.querySelector('.modal-overlay');
         
