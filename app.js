@@ -40,6 +40,8 @@ class FiTrackApp {
             this.showHistory();
         } else if (hash === 'programs') {
             this.showPrograms();
+        } else if (hash === 'settings') {
+            this.showSettings();
         } else {
             // Default to workout view
             this.showWorkout();
@@ -432,6 +434,21 @@ class FiTrackApp {
             this.showWorkout();
         });
 
+        // Settings
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.showSettings();
+            });
+        }
+
+        const backToWorkoutFromSettings = document.getElementById('backToWorkoutFromSettings');
+        if (backToWorkoutFromSettings) {
+            backToWorkoutFromSettings.addEventListener('click', () => {
+                this.showWorkout();
+            });
+        }
+
         // Current workout button
         const currentWorkoutBtn = document.getElementById('currentWorkoutBtn');
         if (currentWorkoutBtn) {
@@ -471,19 +488,29 @@ class FiTrackApp {
         // Handle browser back/forward buttons
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.slice(1);
+            const settingsView = document.getElementById('settingsView');
+            
             if (hash === 'history') {
                 document.getElementById('workoutView').classList.remove('active');
                 document.getElementById('programsView').classList.remove('active');
+                if (settingsView) settingsView.classList.remove('active');
                 document.getElementById('historyView').classList.add('active');
                 this.renderHistory();
             } else if (hash === 'programs') {
                 document.getElementById('workoutView').classList.remove('active');
                 document.getElementById('historyView').classList.remove('active');
+                if (settingsView) settingsView.classList.remove('active');
                 document.getElementById('programsView').classList.add('active');
                 this.renderPrograms();
+            } else if (hash === 'settings' && settingsView) {
+                document.getElementById('workoutView').classList.remove('active');
+                document.getElementById('historyView').classList.remove('active');
+                document.getElementById('programsView').classList.remove('active');
+                settingsView.classList.add('active');
             } else {
                 document.getElementById('historyView').classList.remove('active');
                 document.getElementById('programsView').classList.remove('active');
+                if (settingsView) settingsView.classList.remove('active');
                 document.getElementById('workoutView').classList.add('active');
             }
         });
@@ -1277,6 +1304,8 @@ class FiTrackApp {
     showHistory() {
         document.getElementById('workoutView').classList.remove('active');
         document.getElementById('programsView').classList.remove('active');
+        const settingsView = document.getElementById('settingsView');
+        if (settingsView) settingsView.classList.remove('active');
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
         this.renderHistory();
@@ -1286,8 +1315,22 @@ class FiTrackApp {
     showWorkout() {
         document.getElementById('historyView').classList.remove('active');
         document.getElementById('programsView').classList.remove('active');
+        const settingsView = document.getElementById('settingsView');
+        if (settingsView) settingsView.classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
         window.location.hash = 'workout';
+        this.updateCurrentWorkoutButton();
+    }
+
+    showSettings() {
+        const settingsView = document.getElementById('settingsView');
+        if (!settingsView) return;
+        
+        document.getElementById('workoutView').classList.remove('active');
+        document.getElementById('historyView').classList.remove('active');
+        document.getElementById('programsView').classList.remove('active');
+        settingsView.classList.add('active');
+        window.location.hash = 'settings';
         this.updateCurrentWorkoutButton();
     }
 
@@ -1335,6 +1378,8 @@ class FiTrackApp {
     showPrograms() {
         document.getElementById('workoutView').classList.remove('active');
         document.getElementById('historyView').classList.remove('active');
+        const settingsView = document.getElementById('settingsView');
+        if (settingsView) settingsView.classList.remove('active');
         document.getElementById('programsView').classList.add('active');
         window.location.hash = 'programs';
         this.renderPrograms();

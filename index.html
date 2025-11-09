@@ -28,6 +28,12 @@
                         <path d="M3 21v-5h5"></path>
                     </svg>
                 </button>
+                <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Open settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M23 12h-6m-6 0H5m13.2 5.2l-4.2-4.2m-2-2l-4.2-4.2"></path>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -132,23 +138,6 @@
                     <h2>Workout History</h2>
                 </div>
 
-                <!-- Cloud Sync Section -->
-                <div class="sync-section">
-                    <h3>☁️ Cloud Sync</h3>
-                    <p>Sync your fitness data securely with your GitHub account</p>
-                    
-                    <div class="sync-controls">
-                        <button id="sync-btn" class="sync-connect-btn">
-                            🔗 Connect GitHub
-                        </button>
-                        <button id="disconnect-btn" class="sync-disconnect-btn" style="display: none;">
-                            🔌 Disconnect
-                        </button>
-                    </div>
-                    
-                    <div id="sync-status" class="sync-status"></div>
-                </div>
-
                 <div id="historyContent" class="history-content">
                     <p class="empty-state">No workout history yet.</p>
                 </div>
@@ -167,6 +156,52 @@
                 </div>
                 <div id="programsContent" class="programs-content">
                     <!-- Programs will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view">
+                <div class="view-header">
+                    <button id="backToWorkoutFromSettings" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                        Back
+                    </button>
+                    <h2>Settings</h2>
+                </div>
+
+                <div class="settings-content">
+                    <!-- Cloud Sync Section -->
+                    <div class="sync-section">
+                        <h3>☁️ Cloud Sync</h3>
+                        <p>Sync your fitness data securely with your GitHub account. Your data is stored privately in a GitHub Gist.</p>
+                        
+                        <div class="sync-controls">
+                            <button id="sync-btn" class="sync-connect-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                                </svg>
+                                Connect GitHub
+                            </button>
+                            <button id="disconnect-btn" class="sync-disconnect-btn" style="display: none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Disconnect
+                            </button>
+                        </div>
+                        
+                        <div id="sync-status" class="sync-status"></div>
+                    </div>
+
+                    <!-- App Information Section -->
+                    <div class="settings-section">
+                        <h3>About FiTrack</h3>
+                        <p>Version 1.0.0</p>
+                        <p>A local, offline-first fitness workout tracking web application.</p>
+                    </div>
                 </div>
             </div>
         </main>
