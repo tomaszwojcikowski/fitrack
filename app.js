@@ -1,9 +1,7 @@
 // FiTrack Application
 import { EXERCISES } from './exercises.js';
 import { WORKOUT_PROGRAMS } from './programs.js';
-import { GitHubDeviceAuth } from './services/githubDeviceAuth.js';
-import { GistSyncService } from './services/gistSyncService.js';
-import { SyncModal } from './components/syncModal.js';
+import { SimpleSyncService } from './services/simpleSyncService.js';
 import { renderExerciseCard } from './components/exerciseCard.js';
 
 class FiTrackApp {
@@ -17,8 +15,7 @@ class FiTrackApp {
         this.saveTimeout = null;
         this.activeProgram = null; // { programId, currentWeek, currentDay, startedAt }
         this.programs = WORKOUT_PROGRAMS;
-        this.githubAuth = new GitHubDeviceAuth();
-        this.syncModal = new SyncModal();
+        this.syncService = new SimpleSyncService();
         
         this.init();
     }
@@ -30,6 +27,11 @@ class FiTrackApp {
         this.handleInitialView();
         this.updateUI();
         this.showWelcomeTooltip();
+        
+        // Start auto-sync if connected
+        if (this.syncService.isConnected()) {
+            this.startAutoSync();
+        }
     }
 
     handleInitialView() {
@@ -461,16 +463,24 @@ class FiTrackApp {
         // Sync buttons
         const syncBtn = document.getElementById('sync-btn');
         const disconnectBtn = document.getElementById('disconnect-btn');
+        const tokenInput = document.getElementById('github-token-input');
+        const saveTokenBtn = document.getElementById('save-token-btn');
         
         if (syncBtn) {
             syncBtn.addEventListener('click', () => {
-                this.handleSyncClick();
+                this.handleManualSync();
             });
         }
         
         if (disconnectBtn) {
             disconnectBtn.addEventListener('click', () => {
-                this.handleDisconnectClick();
+                this.handleDisconnect();
+            });
+        }
+        
+        if (saveTokenBtn) {
+            saveTokenBtn.addEventListener('click', () => {
+                this.handleSaveToken();
             });
         }
         
@@ -1124,6 +1134,13 @@ class FiTrackApp {
         } else {
             this.showToast('Workout saved! You can continue editing.', 'success');
         }
+        
+        // Auto-sync if connected
+        if (this.syncService.isConnected()) {
+            this.performSync().catch(err => {
+                console.error('Auto-sync after workout failed:', err);
+            });
+        }
     }
 
     // Rest Timer
@@ -1226,6 +1243,9 @@ class FiTrackApp {
         settingsView.classList.add('active');
         window.location.hash = 'settings';
         this.updateCurrentWorkoutButton();
+        
+        // Update sync UI when showing settings
+        this.updateSyncUI();
     }
 
     renderHistory() {
@@ -1853,110 +1873,122 @@ class FiTrackApp {
     }
 
     // Cloud Sync Methods
-    async handleSyncClick() {
-        const token = localStorage.getItem('github_token');
+    async handleSaveToken() {
+        const tokenInput = document.getElementById('github-token-input');
+        const token = tokenInput?.value?.trim();
         
-        if (token) {
-            // Already authenticated, perform sync
-            await this.performSync(token);
-        } else {
-            // Need to authenticate first
-            await this.authenticateWithGitHub();
+        if (!token) {
+            this.showNotification('❌ Please enter a valid token', 'error');
+            return;
         }
-    }
 
-    async authenticateWithGitHub() {
         try {
-            this.showNotification('Starting authentication...', 'info');
+            this.showNotification('🔄 Verifying token...', 'info');
             
-            const { userCode, verificationUri, pollPromise } = await this.githubAuth.authenticate();
+            // Verify token
+            const isValid = await this.syncService.verifyToken(token);
+            if (!isValid) {
+                this.showNotification('❌ Invalid token. Please check and try again.', 'error');
+                return;
+            }
+
+            // Save token
+            this.syncService.setToken(token);
             
-            // Show modal with authentication instructions
-            const token = await this.syncModal.show(userCode, verificationUri, pollPromise);
+            // Clear input for security
+            if (tokenInput) tokenInput.value = '';
             
-            // Authentication successful
-            this.showNotification('✅ Connected to GitHub successfully!', 'success');
+            // Update UI
             this.updateSyncUI();
             
             // Perform initial sync
-            await this.performSync(token);
+            await this.performSync();
+            
+            // Start auto-sync
+            this.startAutoSync();
+            
+            this.showNotification('✅ Connected successfully! Auto-sync enabled.', 'success');
         } catch (error) {
-            console.error('Authentication error:', error);
-            if (error.message !== 'Authentication cancelled by user') {
-                this.showNotification('❌ ' + error.message, 'error');
-            }
+            console.error('Token save error:', error);
+            this.showNotification('❌ ' + error.message, 'error');
         }
     }
 
-    async performSync(token) {
+    async handleManualSync() {
+        await this.performSync();
+    }
+
+    async performSync() {
         try {
-            this.showNotification('🔄 Syncing data...', 'info');
+            this.showNotification('🔄 Syncing...', 'info');
             
-            // Create sync service
-            const syncService = new GistSyncService(token);
-            
-            // Prepare local data
             const localData = this.getLocalDataForSync();
+            const result = await this.syncService.sync(localData);
             
-            // Perform sync
-            const result = await syncService.sync(localData);
-            
-            if (result.action === 'downloaded') {
-                // Remote data is newer, apply it
+            if (result.action === 'downloaded' && result.data) {
                 this.applyRemoteData(result.data);
-                this.showNotification('✅ Downloaded latest data from cloud', 'success');
-            } else if (result.action === 'uploaded') {
-                this.showNotification('✅ Uploaded local data to cloud', 'success');
+                this.showNotification('✅ ' + result.message, 'success');
             } else {
-                this.showNotification('✅ Data synced successfully', 'success');
+                this.showNotification('✅ ' + result.message, 'success');
             }
         } catch (error) {
             console.error('Sync error:', error);
             
-            // Check if token is invalid
-            if (error.message.includes('401') || error.message.includes('403')) {
-                localStorage.removeItem('github_token');
+            if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Invalid token')) {
+                this.syncService.disconnect();
                 this.updateSyncUI();
-                this.showNotification('❌ Session expired. Please reconnect.', 'error');
+                this.showNotification('❌ Token expired or invalid. Please reconnect.', 'error');
             } else {
-                this.showNotification('❌ ' + error.message, 'error');
+                this.showNotification('❌ Sync failed: ' + error.message, 'error');
             }
         }
     }
 
-    async handleDisconnectClick() {
+    async handleDisconnect() {
         const confirmed = await this.showConfirm(
-            'Are you sure you want to disconnect from GitHub? Your data will remain in the cloud, but you won\'t be able to sync until you reconnect.',
-            'Disconnect from GitHub'
+            'Disconnect from GitHub? Your cloud data will remain, but auto-sync will stop.',
+            'Disconnect'
         );
         
         if (confirmed) {
-            // Clear tokens and Gist ID
-            localStorage.removeItem('github_token');
-            localStorage.removeItem('fitrack_gist_id');
-            
+            this.syncService.disconnect();
             this.updateSyncUI();
             this.showNotification('Disconnected from GitHub', 'info');
         }
     }
 
+    startAutoSync() {
+        this.syncService.startAutoSync(
+            () => this.getLocalDataForSync(),
+            (data) => this.applyRemoteData(data),
+            (result) => {
+                // Silent background sync - only log
+                console.log('Background sync:', result.message);
+            }
+        );
+    }
+
     updateSyncUI() {
         const syncBtn = document.getElementById('sync-btn');
         const disconnectBtn = document.getElementById('disconnect-btn');
+        const tokenSection = document.getElementById('token-section');
+        const connectedSection = document.getElementById('connected-section');
         
         if (!syncBtn || !disconnectBtn) return;
         
-        const token = localStorage.getItem('github_token');
+        const isConnected = this.syncService.isConnected();
         
-        if (token) {
+        if (isConnected) {
             // Connected state
-            syncBtn.innerHTML = '🔄 Sync Now';
+            if (tokenSection) tokenSection.style.display = 'none';
+            if (connectedSection) connectedSection.style.display = 'block';
             syncBtn.style.display = 'inline-flex';
             disconnectBtn.style.display = 'inline-flex';
         } else {
             // Disconnected state
-            syncBtn.innerHTML = '🔗 Connect GitHub';
-            syncBtn.style.display = 'inline-flex';
+            if (tokenSection) tokenSection.style.display = 'block';
+            if (connectedSection) connectedSection.style.display = 'none';
+            syncBtn.style.display = 'none';
             disconnectBtn.style.display = 'none';
         }
     }

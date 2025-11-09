@@ -11,7 +11,8 @@ A local, offline-first fitness workout tracking web application with no backend 
 - 📊 **Workout Tracking** - Log sets, reps, weights, and time for each exercise
 - ⏱️ **Rest Timer** - Animated countdown timer with sound notifications
 - 💾 **Local Storage** - All data saved locally in your browser
-- ☁️ **Cloud Sync** - Sync your data with GitHub Gists (requires disabling ad blockers)
+- ☁️ **Cloud Sync** - Simple, reliable auto-sync with GitHub Gists (no ad blocker issues!)
+- 🔄 **Auto-Sync** - Syncs every 5 minutes and after workouts automatically
 - 📱 **Mobile Optimized** - Responsive design that works perfectly on mobile devices
 - 📈 **Workout History** - Review your past workouts organized by date
 - 🚀 **No Backend** - Completely client-side, works offline
@@ -69,6 +70,24 @@ For each set, you can track:
 ### Data Persistence
 
 All your workout data is automatically saved to your browser's localStorage. Your data will persist even if you close the browser or refresh the page.
+
+### Cloud Sync (Optional)
+
+FiTrack offers optional cloud sync to backup your data and access it across devices:
+
+1. **Simple Setup**: Go to Settings → Cloud Sync
+2. **Create Token**: Click the link to create a GitHub Personal Access Token (only needs `gist` scope)
+3. **Connect**: Paste the token and click Connect
+4. **Done!**: Auto-sync every 5 minutes + after workouts
+
+**Benefits:**
+- ✅ No complex OAuth flow
+- ✅ No CORS proxy (no ad blocker issues!)
+- ✅ Automatic background sync
+- ✅ Private GitHub Gists
+- ✅ Cross-device access
+
+See [SYNC_GUIDE.md](SYNC_GUIDE.md) for detailed instructions.
 
 ## Exercise Categories
 
