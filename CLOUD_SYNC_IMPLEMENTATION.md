@@ -12,6 +12,7 @@ This document describes the implementation of the cloud sync feature for FiTrack
    - Handles GitHub Device Flow OAuth authentication
    - Uses public CLI client ID: `Iv1.b507a08c87ecfe98`
    - No backend required - pure client-side implementation
+   - Uses CORS proxy (corsproxy.io) to bypass browser CORS restrictions
    - Requests only `gist` scope for minimal permissions
 
 2. **GistSyncService** (`services/gistSyncService.js`)
@@ -81,10 +82,11 @@ The implementation uses localStorage for:
 const { userCode, verificationUri, pollPromise } = await githubAuth.authenticate();
 ```
 
-The service requests a device code from GitHub:
-- Endpoint: `https://github.com/login/device/code`
+The service requests a device code from GitHub (via CORS proxy):
+- Endpoint: `https://github.com/login/device/code` (proxied through corsproxy.io)
 - Method: POST
 - Body: `{ client_id, scope: 'gist' }`
+- Note: CORS proxy is required because GitHub's OAuth endpoints don't support CORS for browser requests
 
 ### Step 2: User Authorization
 User is presented with:
@@ -93,8 +95,8 @@ User is presented with:
 3. Instructions to authorize
 
 ### Step 3: Token Polling
-Service polls GitHub for access token:
-- Endpoint: `https://github.com/login/oauth/access_token`
+Service polls GitHub for access token (via CORS proxy):
+- Endpoint: `https://github.com/login/oauth/access_token` (proxied through corsproxy.io)
 - Handles states: authorization_pending, slow_down, expired_token, access_denied
 - Auto-adjusts polling interval on slow_down
 - Timeout after expiration period
@@ -165,8 +167,16 @@ On first sync:
 ### Data Privacy
 - Gists are private by default
 - Only `gist` scope requested (minimal permissions)
-- No third-party services involved
-- Data never passes through any backend
+- CORS proxy used only for OAuth flow (not for data sync)
+- Data sync happens directly with GitHub API
+- Your fitness data is never sent to the CORS proxy
+
+### CORS Proxy
+- Used to bypass browser CORS restrictions for GitHub OAuth endpoints
+- Only proxies OAuth device flow requests (`/login/device/code` and `/login/oauth/access_token`)
+- All Gist data operations go directly to GitHub API (no proxy needed)
+- Uses public corsproxy.io service
+- OAuth tokens are never sent through the proxy - only the initial auth requests
 
 ### CSRF Protection
 - Device Flow provides built-in CSRF protection
