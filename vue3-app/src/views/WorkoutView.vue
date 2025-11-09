@@ -20,48 +20,20 @@
       </button>
     </div>
 
-    <div v-else class="exercises-list">
-      <div
+    <TransitionGroup v-else name="list" tag="div" class="exercises-list">
+      <ExerciseCard
         v-for="exercise in workoutStore.currentWorkout"
         :key="exercise.id"
-        class="exercise-card"
-      >
-        <div class="exercise-header">
-          <h3>{{ exercise.exercise.name }}</h3>
-          <button class="btn btn-sm btn-secondary" @click="workoutStore.removeExercise(exercise.id)">
-            Remove
-          </button>
-        </div>
-        <div class="sets-container">
-          <div v-for="(set, index) in exercise.sets" :key="set.id" class="set-row">
-            <span>Set {{ index + 1 }}</span>
-            <input
-              v-model.number="set.reps"
-              type="number"
-              placeholder="Reps"
-              class="set-input"
-            />
-            <input
-              v-model.number="set.weight"
-              type="number"
-              placeholder="Weight"
-              class="set-input"
-              step="0.5"
-            />
-            <button
-              class="complete-btn"
-              :class="{ active: set.completed }"
-              @click="set.completed = !set.completed"
-            >
-              ✓
-            </button>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-secondary" @click="workoutStore.addSet(exercise.id)">
-          Add Set
-        </button>
-      </div>
-    </div>
+        :exercise="exercise"
+        @remove="workoutStore.removeExercise(exercise.id)"
+        @add-set="workoutStore.addSet(exercise.id)"
+        @update-set="
+          (setId: string, updates) =>
+            workoutStore.updateSet(exercise.id, setId, updates)
+        "
+        @remove-set="(setId: string) => workoutStore.removeSet(exercise.id, setId)"
+      />
+    </TransitionGroup>
 
     <div v-if="workoutStore.hasExercises" class="workout-actions">
       <button class="btn btn-secondary" @click="showExercisePicker = true">
@@ -108,6 +80,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkoutStore } from '@/stores/workout';
 import { useExerciseStore } from '@/stores/exercises';
+import ExerciseCard from '@/components/ExerciseCard.vue';
 import type { Exercise } from '@/types';
 
 const router = useRouter();
@@ -169,57 +142,26 @@ function formatDuration(seconds: number): string {
 .exercises-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
 }
 
-.exercise-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
 }
 
-.exercise-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 
-.sets-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-.set-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.set-input {
-  flex: 1;
-  padding: 0.5rem;
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-}
-
-.complete-btn {
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.complete-btn.active {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: white;
+.list-move {
+  transition: transform 0.3s ease;
 }
 
 .workout-actions {
