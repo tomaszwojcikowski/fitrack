@@ -2465,6 +2465,18 @@ input:focus-visible {
     line-height: 1.6;
 }
 
+.sync-note {
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 3px solid #ffc107;
+    padding: 0.5rem 0.75rem;
+    margin: 0.75rem 0 1rem;
+    border-radius: 4px;
+}
+
+.sync-note small {
+    color: var(--text-secondary);
+}
+
 .sync-controls {
     display: flex;
     gap: 0.75rem;

@@ -11,6 +11,7 @@ A local, offline-first fitness workout tracking web application with no backend 
 - 📊 **Workout Tracking** - Log sets, reps, weights, and time for each exercise
 - ⏱️ **Rest Timer** - Animated countdown timer with sound notifications
 - 💾 **Local Storage** - All data saved locally in your browser
+- ☁️ **Cloud Sync** - Sync your data with GitHub Gists (requires disabling ad blockers)
 - 📱 **Mobile Optimized** - Responsive design that works perfectly on mobile devices
 - 📈 **Workout History** - Review your past workouts organized by date
 - 🚀 **No Backend** - Completely client-side, works offline

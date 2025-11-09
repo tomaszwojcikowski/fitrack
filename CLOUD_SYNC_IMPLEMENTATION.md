@@ -346,6 +346,8 @@ Potential improvements for future versions:
 **"Failed to start authentication"**
 - Check internet connection
 - Verify GitHub is accessible
+- **Disable browser ad blockers** (e.g., uBlock Origin, AdBlock Plus) as they may block CORS proxy requests
+- Try a different browser if the issue persists
 - Try again in a few moments
 
 **"Session expired. Please reconnect."**
