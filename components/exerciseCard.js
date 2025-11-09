@@ -11,9 +11,19 @@ import { renderSetRow } from './setRow.js';
 export function renderExerciseCard(exercise, exIndex) {
     const escapedName = exercise.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     
+    // Calculate completion summary
+    const completedSets = exercise.sets.filter(set => set.completed).length;
+    const totalSets = exercise.sets.length;
+    const allCompleted = completedSets === totalSets && totalSets > 0;
+    
     return `
-        <div class="exercise-card" draggable="true" data-exercise-index="${exIndex}">
+        <div class="exercise-card ${allCompleted ? 'completed' : ''}" draggable="true" data-exercise-index="${exIndex}">
             <div class="exercise-header">
+                <button class="collapse-toggle" onclick="app.toggleExerciseCollapse(${exIndex})" aria-label="Toggle collapse exercise" title="Collapse/expand exercise">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
                 <button class="drag-handle" aria-label="Drag to reorder exercise">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -24,6 +34,7 @@ export function renderExerciseCard(exercise, exIndex) {
                 <div class="exercise-title">
                     <h3 class="exercise-name-clickable" onclick="app.showExerciseHistory('${escapedName}')" title="View history for ${exercise.name}">${exercise.name}</h3>
                     <small>${exercise.category} • ${exercise.equipment}</small>
+                    <div class="exercise-summary">${completedSets}/${totalSets} sets completed</div>
                 </div>
                 <div class="exercise-actions">
                     <button class="btn-icon" onclick="app.swapExercise(${exIndex})" title="Swap exercise" aria-label="Swap ${exercise.name} with another exercise">
