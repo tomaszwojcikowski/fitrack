@@ -1531,9 +1531,18 @@ class FiTrackApp {
         document.getElementById('programsView').classList.remove('active');
         const settingsView = document.getElementById('settingsView');
         if (settingsView) settingsView.classList.remove('active');
+        const dashboardView = document.getElementById('dashboardView');
+        if (dashboardView) dashboardView.classList.remove('active');
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
-        this.renderHistory();
+        
+        // Use new enhanced history rendering
+        if (this.historyViewMode === 'calendar') {
+            this.renderCalendarView();
+        } else {
+            this.renderHistoryWithFilters();
+        }
+        
         this.updateCurrentWorkoutButton();
     }
 
@@ -1562,8 +1571,18 @@ class FiTrackApp {
         this.updateSyncUI();
     }
 
+    // Legacy renderHistory - now uses renderHistoryWithFilters
     renderHistory() {
+        // Check if new elements exist, otherwise use old rendering for compatibility
+        const newContainer = document.getElementById('historyListView');
+        if (newContainer) {
+            this.renderHistoryWithFilters();
+            return;
+        }
+        
+        // Fallback to old rendering for tests
         const container = document.getElementById('historyContent');
+        if (!container) return;
         
         if (this.workoutHistory.length === 0) {
             container.innerHTML = '<p class="empty-state">No workout history yet.</p>';
@@ -2845,6 +2864,8 @@ class FiTrackApp {
 
     renderHistoryWithFilters() {
         const container = document.getElementById('historyListView');
+        if (!container) return; // Guard for tests
+        
         let filtered = [...this.workoutHistory];
         
         // Apply search filter
