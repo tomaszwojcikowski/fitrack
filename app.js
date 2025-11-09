@@ -414,9 +414,40 @@ class FiTrackApp {
             this.stopRestTimer();
         });
 
-        document.getElementById('timerAddTime').addEventListener('click', () => {
-            this.addRestTime(30);
-        });
+        // Timer quick action buttons
+        const timerAdd15 = document.getElementById('timerAdd15');
+        const timerAdd30 = document.getElementById('timerAdd30');
+        const timerSkip = document.getElementById('timerSkip');
+        
+        if (timerAdd15) {
+            timerAdd15.addEventListener('click', () => {
+                this.addRestTime(15);
+            });
+        }
+        
+        if (timerAdd30) {
+            timerAdd30.addEventListener('click', () => {
+                this.addRestTime(30);
+            });
+        }
+        
+        if (timerSkip) {
+            timerSkip.addEventListener('click', () => {
+                this.stopRestTimer();
+            });
+        }
+
+        // FAB (Floating Action Button)
+        const addExerciseFab = document.getElementById('addExerciseFab');
+        if (addExerciseFab) {
+            addExerciseFab.addEventListener('click', () => {
+                const searchInput = document.getElementById('exerciseSearch');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
 
         // Workout date
         document.getElementById('workoutDate').addEventListener('change', (e) => {
@@ -538,6 +569,7 @@ class FiTrackApp {
         this.updateQuickRestButton();
         this.updateProgramIndicator();
         this.updateCurrentWorkoutButton();
+        this.updateFAB();
     }
 
     updateQuickRestButton() {
@@ -550,6 +582,20 @@ class FiTrackApp {
         } else {
             quickRestBtn.classList.add('hidden');
             finishWorkoutContainer.classList.add('hidden');
+        }
+    }
+    
+    updateFAB() {
+        const fab = document.getElementById('addExerciseFab');
+        const workoutView = document.getElementById('workoutView');
+        
+        if (!fab) return;
+        
+        // Show FAB only on workout view when there are exercises (to add more)
+        if (workoutView.classList.contains('active') && this.currentWorkout.length > 0) {
+            fab.classList.remove('hidden');
+        } else {
+            fab.classList.add('hidden');
         }
     }
 
@@ -808,9 +854,18 @@ class FiTrackApp {
         const set = this.currentWorkout[exerciseIndex].sets[setIndex];
         set.completed = !set.completed;
         
-        // If completing a set, start rest timer
+        // If completing a set, start rest timer and add celebration
         if (set.completed) {
             this.startRestTimer(90); // Default 90 seconds rest
+            
+            // Add celebration animation to the exercise card
+            const exerciseCards = document.querySelectorAll('.exercise-card');
+            if (exerciseCards[exerciseIndex]) {
+                exerciseCards[exerciseIndex].classList.add('celebrate');
+                setTimeout(() => {
+                    exerciseCards[exerciseIndex].classList.remove('celebrate');
+                }, 600);
+            }
         }
         
         this.updateUI();
@@ -1193,7 +1248,18 @@ class FiTrackApp {
         const circumference = 2 * Math.PI * 45; // radius is 45
         const offset = circumference * (1 - progress);
         
-        document.querySelector('.timer-progress').style.strokeDashoffset = offset;
+        const progressElement = document.querySelector('.timer-progress');
+        if (progressElement) {
+            progressElement.style.strokeDashoffset = offset;
+            
+            // Color transitions based on remaining time
+            progressElement.classList.remove('warning', 'danger');
+            if (this.restTimerSeconds <= 10) {
+                progressElement.classList.add('danger');
+            } else if (this.restTimerSeconds <= 30) {
+                progressElement.classList.add('warning');
+            }
+        }
     }
 
     playTimerSound() {

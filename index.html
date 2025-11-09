@@ -118,9 +118,13 @@
                                 <div class="timer-label">Rest Time</div>
                             </div>
                         </div>
+                        <div class="timer-quick-actions">
+                            <button id="timerAdd15" class="timer-quick-btn">+15s</button>
+                            <button id="timerAdd30" class="timer-quick-btn">+30s</button>
+                            <button id="timerSkip" class="timer-quick-btn">Skip</button>
+                        </div>
                         <div class="timer-controls">
-                            <button id="timerStop" class="btn btn-secondary">Stop</button>
-                            <button id="timerAddTime" class="btn btn-outline">+30s</button>
+                            <button id="timerStop" class="btn btn-secondary">Stop Timer</button>
                         </div>
                     </div>
                 </div>
@@ -245,6 +249,14 @@
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
             <span>Start Rest</span>
+        </button>
+
+        <!-- Floating Action Button (FAB) for Add Exercise -->
+        <button id="addExerciseFab" class="fab hidden" title="Add Exercise" aria-label="Add exercise to workout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
         </button>
     </div>
 
