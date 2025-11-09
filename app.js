@@ -1001,6 +1001,8 @@ class FiTrackApp {
         });
     }
 
+
+
     moveExercise(fromIndex, toIndex) {
         if (fromIndex === toIndex) return;
         
