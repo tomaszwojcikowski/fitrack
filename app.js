@@ -1243,6 +1243,9 @@ class FiTrackApp {
         settingsView.classList.add('active');
         window.location.hash = 'settings';
         this.updateCurrentWorkoutButton();
+        
+        // Update sync UI when showing settings
+        this.updateSyncUI();
     }
 
     renderHistory() {
