@@ -128,6 +128,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    min-height: 100vh;
     /* OnePlus 12 optimizations */
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
@@ -169,7 +170,8 @@ body {
     position: sticky;
     top: 0;
     z-index: var(--z-header);
-    transition: box-shadow var(--transition-base);
+    transition: all var(--transition-base);
+    backdrop-filter: blur(10px);
     /* OnePlus 12: Hardware acceleration for 120Hz smoothness */
     will-change: box-shadow;
     transform: translateZ(0);
@@ -207,9 +209,29 @@ body {
     cursor: pointer;
     transition: all var(--transition-base);
     backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
     /* OnePlus 12: Hardware acceleration and better touch response */
     will-change: transform, background;
     transform: translateZ(0);
+}
+
+.icon-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.icon-btn:active::before {
+    width: 80px;
+    height: 80px;
 }
 
 .icon-btn:hover {
@@ -222,7 +244,7 @@ body {
     transform: scale(0.95);
 }
 
-.icon-btn:focus {
+.icon-btn:focus-visible {
     outline: 2px solid white;
     outline-offset: 2px;
 }
@@ -346,18 +368,21 @@ body {
     border-radius: var(--radius-lg);
     background: var(--card-bg);
     color: var(--text-primary);
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     font-weight: var(--font-medium);
+    position: relative;
 }
 
 .search-box input:hover {
     border-color: var(--border-light);
+    background: var(--card-hover);
 }
 
 .search-box input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    background: var(--input-bg);
     transform: scale(1.01);
 }
 
@@ -399,7 +424,7 @@ body {
     padding: var(--spacing-md) var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     position: relative;
 }
 
@@ -410,9 +435,10 @@ body {
     top: 0;
     bottom: 0;
     width: 3px;
-    background: var(--primary-color);
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
     transform: scaleY(0);
-    transition: transform var(--transition-base);
+    transition: transform var(--transition-slow);
+    box-shadow: 0 0 8px var(--primary-color);
 }
 
 .exercise-item:last-child {
@@ -422,6 +448,7 @@ body {
 .exercise-item:hover {
     background: var(--hover-bg);
     padding-left: calc(var(--spacing-md) + 8px);
+    transform: translateX(4px);
 }
 
 .exercise-item:hover::before {
@@ -430,7 +457,7 @@ body {
 
 .exercise-item:active {
     background: var(--border-color);
-    transform: scale(0.98);
+    transform: translateX(2px) scale(0.99);
 }
 
 .exercise-item strong {
@@ -520,17 +547,29 @@ body {
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     position: relative;
+    animation: slideInUp 0.4s ease-out;
     /* OnePlus 12: Hardware acceleration for smooth animations */
     will-change: transform, box-shadow;
     transform: translateZ(0);
 }
 
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .exercise-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     border-color: var(--border-light);
-    transform: translateY(-2px) translateZ(0);
+    transform: translateY(-4px) scale(1.01) translateZ(0);
 }
 
 .exercise-card::after {
@@ -540,7 +579,7 @@ body {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: var(--primary-color);
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
     border-radius: var(--radius-lg) 0 0 var(--radius-lg);
     opacity: 0;
     transition: opacity var(--transition-base);
@@ -799,38 +838,42 @@ body {
 .set-complete.completed {
     background: var(--success-color);
     border-color: var(--success-color);
-    animation: successPulse 0.4s ease;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: successPulse 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes successPulse {
     0% {
         transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
     }
     50% {
-        transform: scale(1.2);
+        transform: scale(1.25);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
     }
     100% {
         transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
     }
 }
 
 .set-complete.completed svg {
     opacity: 1;
     color: white;
-    animation: checkmarkAppear 0.3s ease;
+    animation: checkmarkAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes checkmarkAppear {
     0% {
         opacity: 0;
-        transform: scale(0);
+        transform: scale(0) rotate(-180deg);
     }
-    50% {
-        transform: scale(1.2);
+    60% {
+        transform: scale(1.3) rotate(10deg);
     }
     100% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) rotate(0);
     }
 }
 
@@ -884,12 +927,13 @@ body {
     cursor: pointer;
     font-size: var(--text-base);
     font-weight: var(--font-medium);
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
     position: relative;
+    overflow: hidden;
 }
 
 .add-set-btn::before {
@@ -908,6 +952,7 @@ body {
     border-color: var(--primary-color);
     border-style: solid;
     transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .add-set-btn:hover::before {
@@ -916,7 +961,7 @@ body {
 
 .add-set-btn:active {
     background: var(--hover-bg);
-    transform: scale(0.98);
+    transform: translateY(0) scale(0.98);
 }
 
 /* Finish Workout */
@@ -940,7 +985,7 @@ body {
     cursor: pointer;
     font-size: var(--text-xl);
     font-weight: var(--font-bold);
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -948,6 +993,7 @@ body {
     box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .finish-workout-btn::before {
@@ -957,23 +1003,45 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.7s ease;
 }
 
 .finish-workout-btn:hover::before {
     left: 100%;
 }
 
-.finish-workout-btn:hover {
+.finish-workout-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
     background: linear-gradient(135deg, var(--success-dark), #047857);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-xl);
+    opacity: 0;
+    transition: opacity var(--transition-base);
+}
+
+.finish-workout-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-2xl);
+}
+
+.finish-workout-btn:hover::after {
+    opacity: 1;
+}
+
+.finish-workout-btn svg {
+    position: relative;
+    z-index: 1;
+}
+
+.finish-workout-btn span {
+    position: relative;
+    z-index: 1;
 }
 
 .finish-workout-btn:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-1px) scale(1);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Rest Timer */
@@ -1026,16 +1094,19 @@ body {
     stroke-linecap: round;
     stroke-dasharray: 283;
     stroke-dashoffset: 0;
-    transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;
+    transition: stroke-dashoffset 0.1s linear, stroke 0.5s ease;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
 }
 
 /* Timer color transitions based on remaining time */
 .timer-progress.warning {
     stroke: var(--warning-color);
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
 }
 
 .timer-progress.danger {
     stroke: var(--error-color);
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.8));
     animation: timerPulse 1s ease-in-out infinite;
 }
 
@@ -1045,8 +1116,8 @@ body {
         opacity: 1;
     }
     50% {
-        stroke-width: 10;
-        opacity: 0.8;
+        stroke-width: 11;
+        opacity: 0.7;
     }
 }
 
@@ -1060,14 +1131,19 @@ body {
 }
 
 .timer-display {
-    font-size: 3rem;
-    font-weight: 600;
+    font-size: 3.5rem;
+    font-weight: 700;
     margin-bottom: 0.5rem;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .timer-label {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
 }
 
 .timer-controls {
@@ -1179,7 +1255,7 @@ body {
     font-size: var(--text-base);
     font-weight: var(--font-semibold);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all var(--transition-slow);
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -1200,10 +1276,10 @@ body {
     left: 50%;
     width: 0;
     height: 0;
-    border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
     transform: translate(-50%, -50%);
-    transition: width var(--transition-slow), height var(--transition-slow);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
 }
 
 .btn:active::before {
@@ -1211,8 +1287,8 @@ body {
     height: 300px;
 }
 
-.btn:focus {
-    outline: 2px solid var(--primary-light);
+.btn:focus-visible {
+    outline: 3px solid var(--primary-light);
     outline-offset: 2px;
 }
 
@@ -3361,7 +3437,7 @@ input:focus-visible {
     height: 56px;
     min-width: 56px;
     min-height: 56px;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
     border: none;
     border-radius: var(--radius-full);
@@ -3371,8 +3447,10 @@ input:focus-visible {
     align-items: center;
     justify-content: center;
     z-index: var(--z-fab);
-    transition: all var(--transition-base);
-    animation: fabEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all var(--transition-slow);
+    animation: fabEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
     /* OnePlus 12: Hardware acceleration and touch optimization */
     will-change: transform, box-shadow;
     transform: translateZ(0);
@@ -3382,10 +3460,31 @@ input:focus-visible {
     right: max(var(--spacing-xl), calc(env(safe-area-inset-right) + var(--spacing-md)));
 }
 
+.fab::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.fab:active::before {
+    width: 120px;
+    height: 120px;
+}
+
 @keyframes fabEnter {
     0% {
         transform: scale(0) rotate(-180deg);
         opacity: 0;
+    }
+    60% {
+        transform: scale(1.1) rotate(10deg);
     }
     100% {
         transform: scale(1) rotate(0);
@@ -3394,9 +3493,9 @@ input:focus-visible {
 }
 
 .fab:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-hover));
     box-shadow: var(--shadow-xl);
-    transform: scale(1.1) rotate(90deg) translateZ(0);
+    transform: scale(1.15) rotate(90deg) translateZ(0);
 }
 
 .fab:active {
@@ -3412,28 +3511,56 @@ input:focus-visible {
     width: 24px;
     height: 24px;
     transition: transform var(--transition-base);
+    position: relative;
+    z-index: 1;
 }
 
 /* Loading States */
 .loading-skeleton {
     background: linear-gradient(
         90deg,
-        var(--card-bg) 25%,
+        var(--card-bg) 0%,
         var(--hover-bg) 50%,
-        var(--card-bg) 75%
+        var(--card-bg) 100%
     );
     background-size: 200% 100%;
-    animation: loading 1.5s ease-in-out infinite;
+    animation: shimmerLoading 2s ease-in-out infinite;
     border-radius: var(--radius-md);
     min-height: 20px;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes loading {
+.loading-skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.05) 20%,
+        rgba(255, 255, 255, 0.1) 60%,
+        rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmerLoading {
     0% {
-        background-position: 200% 0;
+        background-position: -200% 0;
     }
     100% {
-        background-position: -200% 0;
+        background-position: 200% 0;
+    }
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
     }
 }
 
@@ -3500,16 +3627,21 @@ input:focus-visible {
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
     font-weight: var(--font-bold);
-    animation: prBadgeAppear 0.5s ease, shimmer 2s ease infinite;
+    animation: prBadgeAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), shimmer 3s ease infinite;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes prBadgeAppear {
     0% {
-        transform: scale(0) rotate(-180deg);
+        transform: scale(0) rotate(-360deg);
         opacity: 0;
     }
-    50% {
-        transform: scale(1.2) rotate(10deg);
+    60% {
+        transform: scale(1.3) rotate(15deg);
+    }
+    80% {
+        transform: scale(0.9) rotate(-5deg);
     }
     100% {
         transform: scale(1) rotate(0);
@@ -3519,10 +3651,10 @@ input:focus-visible {
 
 @keyframes shimmer {
     0%, 100% {
-        filter: brightness(1);
+        filter: brightness(1) saturate(1);
     }
     50% {
-        filter: brightness(1.3);
+        filter: brightness(1.4) saturate(1.2);
     }
 }
 
@@ -3601,11 +3733,11 @@ input:focus-visible {
 
 @keyframes modalSlideUp {
     from {
-        transform: translateY(20px);
+        transform: translateY(30px) scale(0.95);
         opacity: 0;
     }
     to {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
         opacity: 1;
     }
 }
