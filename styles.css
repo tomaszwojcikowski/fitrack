@@ -433,11 +433,7 @@ body {
 }
 
 .set-row-wrapper {
-    position: relative;
-    overflow: hidden;
     margin-bottom: 0.5rem;
-    background: var(--danger-color);
-    border-radius: 8px;
 }
 
 .set-row {
@@ -445,7 +441,6 @@ body {
     grid-template-columns: 30px 1fr 1fr auto;
     gap: 0.5rem;
     align-items: end;
-    margin-bottom: 0.5rem;
     padding: 0.5rem;
     background: var(--card-bg);
     border-radius: 8px;
