@@ -3,6 +3,7 @@ import { EXERCISES } from './exercises.js';
 import { WORKOUT_PROGRAMS } from './programs.js';
 import { SimpleSyncService } from './services/simpleSyncService.js';
 import { renderExerciseCard } from './components/exerciseCard.js';
+import { renderModalExerciseItem } from './components/exercisePickerModal.js';
 
 class FiTrackApp {
     constructor() {
@@ -16,6 +17,15 @@ class FiTrackApp {
         this.activeProgram = null; // { programId, currentWeek, currentDay, startedAt }
         this.programs = WORKOUT_PROGRAMS;
         this.syncService = new SimpleSyncService();
+        
+        // Phase 2 features
+        this.favoriteExercises = [];
+        this.recentExercises = [];
+        this.collapsedExercises = new Set();
+        this.autoStartRestTimer = false;
+        this.workoutStartTime = null;
+        this.workoutDurationInterval = null;
+        this.lastWeightSuggestions = {};
         
         this.init();
     }
@@ -348,6 +358,23 @@ class FiTrackApp {
                 console.error('Error loading data:', e);
             }
         }
+        
+        // Load Phase 2 preferences
+        try {
+            const favorites = localStorage.getItem('fitrack_favorites');
+            this.favoriteExercises = favorites ? JSON.parse(favorites) : [];
+            
+            const recent = localStorage.getItem('fitrack_recent');
+            this.recentExercises = recent ? JSON.parse(recent) : [];
+            
+            const autoStart = localStorage.getItem('fitrack_autoStartTimer');
+            this.autoStartRestTimer = autoStart === 'true';
+            
+            const suggestions = localStorage.getItem('fitrack_weightSuggestions');
+            this.lastWeightSuggestions = suggestions ? JSON.parse(suggestions) : {};
+        } catch (e) {
+            console.error('Error loading preferences:', e);
+        }
     }
 
     saveData() {
@@ -356,6 +383,15 @@ class FiTrackApp {
             activeProgram: this.activeProgram
         };
         localStorage.setItem('fitrack_data', JSON.stringify(data));
+        
+        // Save Phase 2 preferences
+        try {
+            localStorage.setItem('fitrack_favorites', JSON.stringify(this.favoriteExercises));
+            localStorage.setItem('fitrack_recent', JSON.stringify(this.recentExercises));
+            localStorage.setItem('fitrack_weightSuggestions', JSON.stringify(this.lastWeightSuggestions));
+        } catch (e) {
+            console.error('Error saving preferences:', e);
+        }
     }
 
     // Event Listeners
@@ -367,15 +403,50 @@ class FiTrackApp {
         });
 
         searchInput.addEventListener('focus', () => {
-            // Show suggestions when focused
-            if (searchInput.value === '') {
-                this.showSuggestedExercises();
-            }
+            // Show suggestions when focused or open modal
+            this.openExercisePickerModal();
         });
 
         document.getElementById('clearSearch').addEventListener('click', () => {
             this.clearSearch();
         });
+
+        // Exercise Picker Modal
+        const modalOverlay = document.querySelector('#exercisePickerModal .modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', () => {
+                this.closeExercisePickerModal();
+            });
+        }
+
+        const closePickerBtn = document.getElementById('closeExercisePicker');
+        if (closePickerBtn) {
+            closePickerBtn.addEventListener('click', () => {
+                this.closeExercisePickerModal();
+            });
+        }
+
+        const modalSearch = document.getElementById('modalExerciseSearch');
+        if (modalSearch) {
+            modalSearch.addEventListener('input', (e) => {
+                this.renderExercisePickerContent(e.target.value);
+                const clearBtn = document.getElementById('modalClearSearch');
+                if (clearBtn) {
+                    clearBtn.classList.toggle('hidden', !e.target.value);
+                }
+            });
+        }
+
+        const modalClearBtn = document.getElementById('modalClearSearch');
+        if (modalClearBtn) {
+            modalClearBtn.addEventListener('click', () => {
+                if (modalSearch) {
+                    modalSearch.value = '';
+                    this.renderExercisePickerContent('');
+                    modalClearBtn.classList.add('hidden');
+                }
+            });
+        }
 
         // Welcome section buttons (check if elements exist for testing)
         const startProgramBtn = document.getElementById('startProgramFromWelcome');
@@ -437,15 +508,20 @@ class FiTrackApp {
             });
         }
 
-        // FAB (Floating Action Button)
+        // FAB (Floating Action Button) - Open modal instead
         const addExerciseFab = document.getElementById('addExerciseFab');
         if (addExerciseFab) {
             addExerciseFab.addEventListener('click', () => {
-                const searchInput = document.getElementById('exerciseSearch');
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                this.openExercisePickerModal();
+            });
+        }
+
+        // Auto-start timer toggle
+        const autoStartToggle = document.getElementById('autoStartTimer');
+        if (autoStartToggle) {
+            autoStartToggle.checked = this.autoStartRestTimer;
+            autoStartToggle.addEventListener('change', (e) => {
+                this.toggleAutoStartTimer(e.target.checked);
             });
         }
 
@@ -793,11 +869,19 @@ class FiTrackApp {
         const existingIndex = this.currentWorkout.findIndex(e => e.name === exercise.name);
         
         if (existingIndex === -1) {
+            // Start workout duration timer if this is the first exercise
+            if (this.currentWorkout.length === 0) {
+                this.startWorkoutDurationTimer();
+            }
+            
             this.currentWorkout.push({
                 ...exercise,
                 sets: [this.createEmptySet()]
             });
             this.showToast(`${exercise.name} added to workout`, 'success');
+            
+            // Add to recent exercises
+            this.addToRecentExercises(exercise.name);
         } else {
             this.showToast(`${exercise.name} is already in your workout`, 'info');
         }
@@ -851,12 +935,20 @@ class FiTrackApp {
     }
 
     toggleSetComplete(exerciseIndex, setIndex) {
-        const set = this.currentWorkout[exerciseIndex].sets[setIndex];
+        const exercise = this.currentWorkout[exerciseIndex];
+        const set = exercise.sets[setIndex];
         set.completed = !set.completed;
         
-        // If completing a set, start rest timer and add celebration
+        // If completing a set, handle auto-start timer and celebration
         if (set.completed) {
-            this.startRestTimer(90); // Default 90 seconds rest
+            // Auto-start rest timer if enabled
+            if (this.autoStartRestTimer && !this.restTimerInterval) {
+                this.startRestTimer(90); // Default 90 seconds rest
+                this.showToast('Rest timer started automatically', 'info');
+            } else if (!this.autoStartRestTimer) {
+                // Old behavior - always start timer
+                this.startRestTimer(90);
+            }
             
             // Add celebration animation to the exercise card
             const exerciseCards = document.querySelectorAll('.exercise-card');
@@ -865,6 +957,14 @@ class FiTrackApp {
                 setTimeout(() => {
                     exerciseCards[exerciseIndex].classList.remove('celebrate');
                 }, 600);
+            }
+            
+            // Check if all exercise sets are completed - auto-collapse
+            const allSetsCompleted = exercise.sets.every(s => s.completed);
+            if (allSetsCompleted) {
+                setTimeout(() => {
+                    this.toggleExerciseCollapse(exerciseIndex);
+                }, 1500);
             }
         }
         
@@ -1156,6 +1256,9 @@ class FiTrackApp {
             return;
         }
 
+        // Stop duration timer and get total duration
+        const totalDuration = this.stopWorkoutDurationTimer();
+
         // Save the current workout
         this.saveCurrentWorkout();
 
@@ -1169,13 +1272,16 @@ class FiTrackApp {
         }
 
         // Ask if user wants to clear the workout
+        const minutes = Math.floor(totalDuration / 60);
+        const durationText = minutes > 0 ? ` (${minutes} min)` : '';
         const shouldClear = await this.showConfirm(
-            'Workout saved to history! Would you like to start a new workout?',
+            `Workout saved to history!${durationText} Would you like to start a new workout?`,
             'Workout Complete'
         );
         
         if (shouldClear) {
             this.currentWorkout = [];
+            this.collapsedExercises.clear();
             this.updateUI();
             
             // Show appropriate welcome section
@@ -2072,6 +2178,289 @@ class FiTrackApp {
                 statusEl.classList.remove('show');
             }, 5000);
         }
+    }
+
+    // Phase 2: Exercise Picker Modal
+    openExercisePickerModal() {
+        const modal = document.getElementById('exercisePickerModal');
+        if (!modal) return;
+        
+        modal.classList.remove('hidden');
+        this.renderExercisePickerContent();
+        
+        // Focus search input
+        const searchInput = document.getElementById('modalExerciseSearch');
+        if (searchInput) {
+            setTimeout(() => searchInput.focus(), 100);
+        }
+    }
+
+    closeExercisePickerModal() {
+        const modal = document.getElementById('exercisePickerModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    renderExercisePickerContent(searchTerm = '') {
+        const favoriteSection = document.getElementById('favoriteExercises');
+        const recentSection = document.getElementById('recentExercises');
+        const allSection = document.getElementById('allExercises');
+        const noResults = document.getElementById('noResults');
+        
+        if (!favoriteSection || !recentSection || !allSection || !noResults) return;
+        
+        let filteredExercises = EXERCISES;
+        
+        // Filter exercises by search term
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredExercises = EXERCISES.filter(ex => 
+                ex.name.toLowerCase().includes(term) ||
+                ex.category.toLowerCase().includes(term) ||
+                ex.equipment.toLowerCase().includes(term)
+            );
+        }
+        
+        // Show/hide sections based on search and data
+        if (searchTerm) {
+            favoriteSection.classList.add('hidden');
+            recentSection.classList.add('hidden');
+        } else {
+            // Show favorites if exists
+            if (this.favoriteExercises.length > 0) {
+                favoriteSection.classList.remove('hidden');
+                const favoritesList = document.getElementById('favoriteExercisesList');
+                const favoriteItems = this.favoriteExercises
+                    .map(name => EXERCISES.find(ex => ex.name === name))
+                    .filter(ex => ex)
+                    .map(ex => renderModalExerciseItem(ex, true));
+                favoritesList.innerHTML = favoriteItems.join('');
+            } else {
+                favoriteSection.classList.add('hidden');
+            }
+            
+            // Show recent if exists
+            if (this.recentExercises.length > 0) {
+                recentSection.classList.remove('hidden');
+                const recentList = document.getElementById('recentExercisesList');
+                const recentItems = this.recentExercises
+                    .slice(0, 5) // Show last 5
+                    .map(name => EXERCISES.find(ex => ex.name === name))
+                    .filter(ex => ex)
+                    .map(ex => renderModalExerciseItem(ex, this.favoriteExercises.includes(ex.name)));
+                recentList.innerHTML = recentItems.join('');
+            } else {
+                recentSection.classList.add('hidden');
+            }
+        }
+        
+        // Render filtered exercises
+        if (filteredExercises.length > 0) {
+            allSection.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            const allList = document.getElementById('allExercisesList');
+            const allItems = filteredExercises.map(ex => 
+                renderModalExerciseItem(ex, this.favoriteExercises.includes(ex.name), searchTerm)
+            );
+            allList.innerHTML = allItems.join('');
+        } else {
+            allSection.classList.add('hidden');
+            noResults.classList.remove('hidden');
+        }
+    }
+
+    selectExerciseFromModal(exerciseName) {
+        const exercise = EXERCISES.find(ex => ex.name === exerciseName);
+        if (exercise) {
+            this.addExercise(exercise);
+            this.addToRecentExercises(exerciseName);
+            this.closeExercisePickerModal();
+        }
+    }
+
+    toggleFavoriteExercise(exerciseName) {
+        const index = this.favoriteExercises.indexOf(exerciseName);
+        if (index > -1) {
+            this.favoriteExercises.splice(index, 1);
+            this.showToast('Removed from favorites', 'info');
+        } else {
+            this.favoriteExercises.push(exerciseName);
+            this.showToast('Added to favorites', 'success');
+        }
+        this.saveData();
+        this.renderExercisePickerContent(document.getElementById('modalExerciseSearch')?.value || '');
+    }
+
+    addToRecentExercises(exerciseName) {
+        // Remove if already exists
+        this.recentExercises = this.recentExercises.filter(name => name !== exerciseName);
+        // Add to beginning
+        this.recentExercises.unshift(exerciseName);
+        // Keep only last 10
+        this.recentExercises = this.recentExercises.slice(0, 10);
+        this.saveData();
+    }
+
+    // Phase 2: Collapsible Exercise Cards
+    toggleExerciseCollapse(exIndex) {
+        const card = document.querySelector(`[data-exercise-index="${exIndex}"]`);
+        if (!card) return;
+        
+        card.classList.toggle('collapsed');
+        
+        // Remember state
+        if (card.classList.contains('collapsed')) {
+            this.collapsedExercises.add(exIndex);
+        } else {
+            this.collapsedExercises.delete(exIndex);
+        }
+    }
+
+    // Phase 2: Auto-start Rest Timer
+    toggleAutoStartTimer(enabled) {
+        this.autoStartRestTimer = enabled;
+        localStorage.setItem('fitrack_autoStartTimer', enabled.toString());
+        this.showToast(
+            enabled ? 'Auto-start rest timer enabled' : 'Auto-start rest timer disabled',
+            'info'
+        );
+    }
+
+    // Phase 2: Workout Duration Timer
+    startWorkoutDurationTimer() {
+        if (!this.workoutStartTime) {
+            this.workoutStartTime = Date.now();
+        }
+        
+        const durationEl = document.getElementById('workoutDuration');
+        if (durationEl) {
+            durationEl.classList.remove('hidden');
+            durationEl.classList.add('active');
+        }
+        
+        // Clear any existing interval
+        if (this.workoutDurationInterval) {
+            clearInterval(this.workoutDurationInterval);
+        }
+        
+        // Update every second
+        this.workoutDurationInterval = setInterval(() => {
+            this.updateWorkoutDuration();
+        }, 1000);
+        
+        this.updateWorkoutDuration();
+    }
+
+    updateWorkoutDuration() {
+        if (!this.workoutStartTime) return;
+        
+        const elapsed = Math.floor((Date.now() - this.workoutStartTime) / 1000);
+        const hours = Math.floor(elapsed / 3600);
+        const minutes = Math.floor((elapsed % 3600) / 60);
+        const seconds = elapsed % 60;
+        
+        const timeEl = document.getElementById('durationTime');
+        if (timeEl) {
+            if (hours > 0) {
+                timeEl.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                timeEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+    }
+
+    stopWorkoutDurationTimer() {
+        if (this.workoutDurationInterval) {
+            clearInterval(this.workoutDurationInterval);
+            this.workoutDurationInterval = null;
+        }
+        
+        const durationEl = document.getElementById('workoutDuration');
+        if (durationEl) {
+            durationEl.classList.add('hidden');
+            durationEl.classList.remove('active');
+        }
+        
+        const duration = this.workoutStartTime ? Math.floor((Date.now() - this.workoutStartTime) / 1000) : 0;
+        this.workoutStartTime = null;
+        
+        return duration;
+    }
+
+    // Phase 2: Smart Weight Suggestions
+    showSmartSuggestion(exerciseName, setIndex) {
+        const exercise = this.currentWorkout.find(ex => ex.name === exerciseName);
+        if (!exercise || setIndex >= exercise.sets.length) return;
+        
+        // Get last workout data for this exercise
+        const lastWorkout = this.getLastWorkoutForExercise(exerciseName);
+        if (!lastWorkout || !lastWorkout.sets || lastWorkout.sets.length === 0) return;
+        
+        const lastSet = lastWorkout.sets[Math.min(setIndex, lastWorkout.sets.length - 1)];
+        if (!lastSet || !lastSet.weight) return;
+        
+        // Calculate suggestion
+        const lastWeight = parseFloat(lastSet.weight);
+        const allCompleted = lastWorkout.sets.every(s => s.completed);
+        const suggestedWeight = allCompleted ? (lastWeight * 1.025).toFixed(1) : lastWeight;
+        
+        // Show suggestion banner
+        this.displayWeightSuggestion(exerciseName, setIndex, lastWeight, suggestedWeight);
+    }
+
+    displayWeightSuggestion(exerciseName, setIndex, lastWeight, suggestedWeight) {
+        const exerciseCard = document.querySelector(`[data-exercise-index]`);
+        if (!exerciseCard) return;
+        
+        // Check if suggestion already exists
+        const existingSuggestion = exerciseCard.querySelector('.smart-suggestion');
+        if (existingSuggestion) return;
+        
+        const suggestionHtml = `
+            <div class="smart-suggestion" data-exercise="${exerciseName}" data-set="${setIndex}">
+                <svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">💡 Smart Suggestion</div>
+                    <div class="suggestion-text">Last time: ${lastWeight} kg, try ${suggestedWeight} kg today</div>
+                </div>
+                <div class="suggestion-actions">
+                    <button class="suggestion-btn" onclick="app.applySuggestion('${exerciseName}', ${setIndex}, ${suggestedWeight})">Apply</button>
+                    <button class="suggestion-btn secondary" onclick="app.dismissSuggestion('${exerciseName}')">Dismiss</button>
+                </div>
+            </div>
+        `;
+        
+        exerciseCard.insertAdjacentHTML('afterbegin', suggestionHtml);
+    }
+
+    applySuggestion(exerciseName, setIndex, weight) {
+        const exIndex = this.currentWorkout.findIndex(ex => ex.name === exerciseName);
+        if (exIndex === -1) return;
+        
+        this.updateSet(exIndex, setIndex, 'weight', weight);
+        this.dismissSuggestion(exerciseName);
+        this.showToast('Suggestion applied!', 'success');
+    }
+
+    dismissSuggestion(exerciseName) {
+        const suggestion = document.querySelector(`.smart-suggestion[data-exercise="${exerciseName}"]`);
+        if (suggestion) {
+            suggestion.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => suggestion.remove(), 300);
+        }
+    }
+
+    getLastWorkoutForExercise(exerciseName) {
+        for (const workout of this.workoutHistory) {
+            const exercise = workout.exercises?.find(ex => ex.name === exerciseName);
+            if (exercise) return exercise;
+        }
+        return null;
     }
 
     getLocalDataForSync() {
