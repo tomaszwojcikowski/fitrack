@@ -44,43 +44,21 @@
       </button>
     </div>
 
-    <!-- Simple Exercise Picker Modal -->
-    <div v-if="showExercisePicker" class="modal-overlay" @click="showExercisePicker = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Select Exercise</h2>
-          <button class="close-btn" @click="showExercisePicker = false">×</button>
-        </div>
-        <div class="modal-body">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search exercises..."
-            class="search-input"
-          />
-          <div class="exercise-grid">
-            <div
-              v-for="ex in filteredExercises"
-              :key="ex.id"
-              class="exercise-item"
-              @click="selectExercise(ex)"
-            >
-              <div class="exercise-name">{{ ex.name }}</div>
-              <div class="exercise-meta">{{ ex.category }} • {{ ex.equipment }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Enhanced Exercise Picker Modal -->
+    <ExercisePicker
+      v-model="showExercisePicker"
+      @select="selectExercise"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkoutStore } from '@/stores/workout';
 import { useExerciseStore } from '@/stores/exercises';
 import ExerciseCard from '@/components/ExerciseCard.vue';
+import ExercisePicker from '@/components/ExercisePicker.vue';
 import type { Exercise } from '@/types';
 
 const router = useRouter();
@@ -88,17 +66,9 @@ const workoutStore = useWorkoutStore();
 const exerciseStore = useExerciseStore();
 
 const showExercisePicker = ref(false);
-const searchQuery = ref('');
-
-const filteredExercises = computed(() => {
-  return exerciseStore.searchExercises(searchQuery.value);
-});
 
 function selectExercise(exercise: Exercise) {
   workoutStore.addExercise(exercise);
-  exerciseStore.addToRecent(exercise.id);
-  showExercisePicker.value = false;
-  searchQuery.value = '';
 }
 
 function finishWorkout() {
@@ -168,92 +138,5 @@ function formatDuration(seconds: number): string {
   display: flex;
   gap: 1rem;
   margin-top: 2rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--card-bg);
-  border-radius: var(--radius-xl);
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  background: var(--input-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-}
-
-.exercise-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.exercise-item {
-  padding: 1rem;
-  background: var(--bg-color);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.exercise-item:hover {
-  background: var(--hover-bg);
-}
-
-.exercise-name {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.exercise-meta {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
 }
 </style>

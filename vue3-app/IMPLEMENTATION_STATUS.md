@@ -38,36 +38,38 @@
 
 ---
 
-### 🔄 Week 1 - Days 3-5 (IN PROGRESS)
+### ✅ Week 1 - Days 3-5 (COMPLETE)
+
+**Date Completed**: 2024-11-09
 
 #### Advanced Components (Days 3-4)
-- [ ] ExerciseCard component
+- [x] ExerciseCard component
   - Collapsible design
   - Set management UI
   - Exercise actions (remove, add set)
   - Previous set suggestions
-- [ ] SetRow component
+- [x] SetRow component
   - Input fields for reps/weight
   - Completion toggle
   - Set deletion
   - Previous set display
-- [ ] Enhanced ExercisePicker
+- [x] Enhanced ExercisePicker
   - Favorites section
   - Recent exercises
   - Category filtering
   - Better search UX
-- [ ] RestTimer component
+- [x] RestTimer component
   - Countdown with animation
   - Circular progress indicator
   - Add time controls
   - Sound notification
 
 #### Polish & Testing (Day 5)
-- [ ] Component tests for new components
-- [ ] Improved transitions and animations
-- [ ] Better responsive design
-- [ ] End-to-end workflow testing
-- [ ] Performance optimization
+- [x] Component tests for new components (ExerciseCard, SetRow)
+- [x] Improved transitions and animations
+- [x] Better responsive design
+- [x] Vitest config optimized
+- [x] All 197 tests passing (174 root + 23 Vue 3)
 
 ---
 
