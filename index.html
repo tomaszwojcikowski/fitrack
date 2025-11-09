@@ -131,6 +131,24 @@
                     </button>
                     <h2>Workout History</h2>
                 </div>
+
+                <!-- Cloud Sync Section -->
+                <div class="sync-section">
+                    <h3>☁️ Cloud Sync</h3>
+                    <p>Sync your fitness data securely with your GitHub account</p>
+                    
+                    <div class="sync-controls">
+                        <button id="sync-btn" class="sync-connect-btn">
+                            🔗 Connect GitHub
+                        </button>
+                        <button id="disconnect-btn" class="sync-disconnect-btn" style="display: none;">
+                            🔌 Disconnect
+                        </button>
+                    </div>
+                    
+                    <div id="sync-status" class="sync-status"></div>
+                </div>
+
                 <div id="historyContent" class="history-content">
                     <p class="empty-state">No workout history yet.</p>
                 </div>
@@ -204,6 +222,9 @@
 
     <script type="module" src="exercises.js"></script>
     <script type="module" src="programs.js"></script>
+    <script type="module" src="services/githubDeviceAuth.js"></script>
+    <script type="module" src="services/gistSyncService.js"></script>
+    <script type="module" src="components/syncModal.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>

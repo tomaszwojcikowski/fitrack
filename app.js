@@ -1,6 +1,9 @@
 // FiTrack Application
 import { EXERCISES } from './exercises.js';
 import { WORKOUT_PROGRAMS } from './programs.js';
+import { GitHubDeviceAuth } from './services/githubDeviceAuth.js';
+import { GistSyncService } from './services/gistSyncService.js';
+import { SyncModal } from './components/syncModal.js';
 
 class FiTrackApp {
     constructor() {
@@ -13,6 +16,8 @@ class FiTrackApp {
         this.saveTimeout = null;
         this.activeProgram = null; // { programId, currentWeek, currentDay, startedAt }
         this.programs = WORKOUT_PROGRAMS;
+        this.githubAuth = new GitHubDeviceAuth();
+        this.syncModal = new SyncModal();
         
         this.init();
     }
@@ -435,6 +440,25 @@ class FiTrackApp {
             });
         }
 
+        // Sync buttons
+        const syncBtn = document.getElementById('sync-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        
+        if (syncBtn) {
+            syncBtn.addEventListener('click', () => {
+                this.handleSyncClick();
+            });
+        }
+        
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', () => {
+                this.handleDisconnectClick();
+            });
+        }
+        
+        // Update sync UI on init
+        this.updateSyncUI();
+
         // Click outside to close exercise list
         document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.search-box');
@@ -842,8 +866,9 @@ class FiTrackApp {
                 </div>
                 <div class="sets-list">
                     ${exercise.sets.map((set, setIndex) => `
-                        <div class="set-row">
-                            <div class="set-number">${setIndex + 1}</div>
+                        <div class="set-row-wrapper" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+                            <div class="set-row">
+                                <div class="set-number">${setIndex + 1}</div>
                             <div class="set-input">
                                 <label>Weight (kg)</label>
                                 <input type="number" 
@@ -1886,6 +1911,169 @@ class FiTrackApp {
 
         // Animate in
         setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    // Cloud Sync Methods
+    async handleSyncClick() {
+        const token = localStorage.getItem('github_token');
+        
+        if (token) {
+            // Already authenticated, perform sync
+            await this.performSync(token);
+        } else {
+            // Need to authenticate first
+            await this.authenticateWithGitHub();
+        }
+    }
+
+    async authenticateWithGitHub() {
+        try {
+            this.showNotification('Starting authentication...', 'info');
+            
+            const { userCode, verificationUri, pollPromise } = await this.githubAuth.authenticate();
+            
+            // Show modal with authentication instructions
+            const token = await this.syncModal.show(userCode, verificationUri, pollPromise);
+            
+            // Authentication successful
+            this.showNotification('✅ Connected to GitHub successfully!', 'success');
+            this.updateSyncUI();
+            
+            // Perform initial sync
+            await this.performSync(token);
+        } catch (error) {
+            console.error('Authentication error:', error);
+            if (error.message !== 'Authentication cancelled by user') {
+                this.showNotification('❌ ' + error.message, 'error');
+            }
+        }
+    }
+
+    async performSync(token) {
+        try {
+            this.showNotification('🔄 Syncing data...', 'info');
+            
+            // Create sync service
+            const syncService = new GistSyncService(token);
+            
+            // Prepare local data
+            const localData = this.getLocalDataForSync();
+            
+            // Perform sync
+            const result = await syncService.sync(localData);
+            
+            if (result.action === 'downloaded') {
+                // Remote data is newer, apply it
+                this.applyRemoteData(result.data);
+                this.showNotification('✅ Downloaded latest data from cloud', 'success');
+            } else if (result.action === 'uploaded') {
+                this.showNotification('✅ Uploaded local data to cloud', 'success');
+            } else {
+                this.showNotification('✅ Data synced successfully', 'success');
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+            
+            // Check if token is invalid
+            if (error.message.includes('401') || error.message.includes('403')) {
+                localStorage.removeItem('github_token');
+                this.updateSyncUI();
+                this.showNotification('❌ Session expired. Please reconnect.', 'error');
+            } else {
+                this.showNotification('❌ ' + error.message, 'error');
+            }
+        }
+    }
+
+    async handleDisconnectClick() {
+        const confirmed = await this.showConfirm(
+            'Are you sure you want to disconnect from GitHub? Your data will remain in the cloud, but you won\'t be able to sync until you reconnect.',
+            'Disconnect from GitHub'
+        );
+        
+        if (confirmed) {
+            // Clear tokens and Gist ID
+            localStorage.removeItem('github_token');
+            localStorage.removeItem('fitrack_gist_id');
+            
+            this.updateSyncUI();
+            this.showNotification('Disconnected from GitHub', 'info');
+        }
+    }
+
+    updateSyncUI() {
+        const syncBtn = document.getElementById('sync-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        
+        if (!syncBtn || !disconnectBtn) return;
+        
+        const token = localStorage.getItem('github_token');
+        
+        if (token) {
+            // Connected state
+            syncBtn.innerHTML = '🔄 Sync Now';
+            syncBtn.style.display = 'inline-flex';
+            disconnectBtn.style.display = 'inline-flex';
+        } else {
+            // Disconnected state
+            syncBtn.innerHTML = '🔗 Connect GitHub';
+            syncBtn.style.display = 'inline-flex';
+            disconnectBtn.style.display = 'none';
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        const statusEl = document.getElementById('sync-status');
+        if (!statusEl) return;
+        
+        statusEl.textContent = message;
+        statusEl.className = `sync-status ${type} show`;
+        
+        // Auto-hide after 5 seconds for success messages
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 5000);
+        }
+    }
+
+    getLocalDataForSync() {
+        return {
+            version: '1.0',
+            workouts: this.workoutHistory,
+            exercises: this.currentWorkout,
+            progress: [],
+            settings: {
+                activeProgram: this.activeProgram
+            },
+            createdAt: new Date().toISOString(),
+            lastSync: new Date().toISOString()
+        };
+    }
+
+    applyRemoteData(remoteData) {
+        if (!remoteData || !this.validateRemoteData(remoteData)) {
+            throw new Error('Invalid remote data structure');
+        }
+        
+        // Apply remote data to local state
+        this.workoutHistory = remoteData.workouts || [];
+        this.currentWorkout = remoteData.exercises || [];
+        this.activeProgram = remoteData.settings?.activeProgram || null;
+        
+        // Save to localStorage
+        this.saveData();
+        
+        // Update UI
+        this.updateUI();
+        this.renderHistory();
+    }
+
+    validateRemoteData(data) {
+        return data && 
+               typeof data === 'object' &&
+               'version' in data &&
+               Array.isArray(data.workouts);
     }
 }
 
