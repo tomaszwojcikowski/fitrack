@@ -104,9 +104,9 @@ const filteredExercises = computed(() => {
   const results = exerciseStore.searchExercises(searchQuery.value);
   // Exclude favorites and recent from main list when not searching
   if (!searchQuery.value) {
-    const favoriteIds = new Set(exerciseStore.favoriteExercises.map(e => e.id));
-    const recentIds = new Set(exerciseStore.recentExercises.map(e => e.id));
-    return results.filter(ex => !favoriteIds.has(ex.id) && !recentIds.has(ex.id));
+    const favoriteIds = new Set(exerciseStore.favoriteExercises.map((e: Exercise) => e.id));
+    const recentIds = new Set(exerciseStore.recentExercises.map((e: Exercise) => e.id));
+    return results.filter((ex: Exercise) => !favoriteIds.has(ex.id) && !recentIds.has(ex.id));
   }
   return results;
 });

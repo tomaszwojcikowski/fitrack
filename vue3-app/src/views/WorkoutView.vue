@@ -28,7 +28,7 @@
         @remove="workoutStore.removeExercise(exercise.id)"
         @add-set="workoutStore.addSet(exercise.id)"
         @update-set="
-          (setId: string, updates) =>
+          (setId: string, updates: any) =>
             workoutStore.updateSet(exercise.id, setId, updates)
         "
         @remove-set="(setId: string) => workoutStore.removeSet(exercise.id, setId)"
@@ -57,7 +57,6 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkoutStore } from '@/stores/workout';
 import { useHistoryStore } from '@/stores/history';
-import { useExerciseStore } from '@/stores/exercises';
 import ExerciseCard from '@/components/ExerciseCard.vue';
 import ExercisePicker from '@/components/ExercisePicker.vue';
 import type { Exercise } from '@/types';
@@ -65,7 +64,6 @@ import type { Exercise } from '@/types';
 const router = useRouter();
 const workoutStore = useWorkoutStore();
 const historyStore = useHistoryStore();
-const exerciseStore = useExerciseStore();
 
 const showExercisePicker = ref(false);
 
@@ -79,8 +77,8 @@ async function finishWorkout() {
   }
 
   // Confirm if there are incomplete sets
-  const incompleteSets = workoutStore.currentWorkout.some(ex => 
-    ex.sets.some(set => !set.completed)
+  const incompleteSets = workoutStore.currentWorkout.some((ex: any) => 
+    ex.sets.some((set: any) => !set.completed)
   );
   
   if (incompleteSets) {

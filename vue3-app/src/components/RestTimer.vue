@@ -73,7 +73,7 @@ const isActive = ref(false);
 const isPaused = ref(false);
 const timeRemaining = ref(0);
 const totalDuration = ref(0);
-let interval: NodeJS.Timeout | null = null;
+let interval: ReturnType<typeof setInterval> | null = null;
 
 const circumference = 2 * Math.PI * 90;
 

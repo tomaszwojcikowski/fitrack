@@ -89,12 +89,12 @@ const duration = computed(() => {
 });
 
 const totalSets = computed(() => {
-  return props.workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+  return props.workout.exercises.reduce((sum: number, ex: any) => sum + ex.sets.length, 0);
 });
 
 const totalVolume = computed(() => {
-  return props.workout.exercises.reduce((sum, ex) => {
-    return sum + ex.sets.reduce((setSum, set) => {
+  return props.workout.exercises.reduce((sum: number, ex: any) => {
+    return sum + ex.sets.reduce((setSum: number, set: any) => {
       return setSum + (set.weight * set.reps);
     }, 0);
   }, 0);

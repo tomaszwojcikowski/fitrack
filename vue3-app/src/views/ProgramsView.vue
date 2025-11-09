@@ -114,26 +114,33 @@ function handleStartTodayWorkout() {
     const exerciseToAdd = {
       id: `${Date.now()}-${Math.random()}`,
       name: ex.name,
-      category: 'strength',
-      equipment: 'barbell',
+      category: 'strength' as const,
+      equipment: 'barbell' as const,
       description: ex.notes || '',
     };
     
     workoutStore.addExercise(exerciseToAdd);
     
     // Add the prescribed sets
-    const exerciseId = workoutStore.currentWorkout[workoutStore.currentWorkout.length - 1].id;
-    for (let i = 0; i < ex.sets; i++) {
-      workoutStore.addSet(exerciseId);
-      // Set target reps if available
-      if (ex.reps && typeof ex.reps === 'number') {
-        const setIndex = workoutStore.currentWorkout
-          .find(e => e.id === exerciseId)
-          ?.sets.length! - 1;
-        workoutStore.updateSet(exerciseId, setIndex, {
-          reps: ex.reps,
-          weight: ex.weight || 0,
-        });
+    const addedExercise = workoutStore.currentWorkout[workoutStore.currentWorkout.length - 1];
+    if (addedExercise) {
+      const exerciseId = addedExercise.id;
+      for (let i = 0; i < ex.sets; i++) {
+        workoutStore.addSet(exerciseId);
+        // Set target reps if available
+        if (ex.reps && typeof ex.reps === 'number') {
+          const exercise = workoutStore.currentWorkout.find(e => e.id === exerciseId);
+          if (exercise) {
+            const setIndex = exercise.sets.length - 1;
+            const setId = exercise.sets[setIndex]?.id;
+            if (setId) {
+              workoutStore.updateSet(exerciseId, setId, {
+                reps: ex.reps,
+                weight: ex.weight || 0,
+              });
+            }
+          }
+        }
       }
     }
   });

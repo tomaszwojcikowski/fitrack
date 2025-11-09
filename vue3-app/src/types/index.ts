@@ -12,7 +12,8 @@ export type ExerciseCategory =
   | 'calves'
   | 'core'
   | 'olympic'
-  | 'cardio';
+  | 'cardio'
+  | 'strength'; // Added for program exercises
 
 export type Equipment =
   | 'barbell'

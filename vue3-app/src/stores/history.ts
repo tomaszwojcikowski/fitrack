@@ -40,7 +40,9 @@ export const useHistoryStore = defineStore('history', () => {
     const totalVolume = workouts.value.reduce((sum, workout) => {
       return sum + workout.exercises.reduce((exSum, exercise) => {
         return exSum + exercise.sets.reduce((setSum, set) => {
-          return setSum + (set.weight * set.reps);
+          const weight = typeof set.weight === 'number' ? set.weight : 0;
+          const reps = typeof set.reps === 'number' ? set.reps : 0;
+          return setSum + (weight * reps);
         }, 0);
       }, 0);
     }, 0);
@@ -169,8 +171,8 @@ export const useHistoryStore = defineStore('history', () => {
           history.push({
             date: workout.date,
             sets: exercise.sets.map(s => ({
-              weight: s.weight,
-              reps: s.reps,
+              weight: typeof s.weight === 'number' ? s.weight : 0,
+              reps: typeof s.reps === 'number' ? s.reps : 0,
               completed: s.completed,
             })),
           });

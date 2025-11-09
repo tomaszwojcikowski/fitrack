@@ -40,7 +40,7 @@ const showUpdateNotification = ref(false);
 
 // Register service worker with auto-update
 const { needRefresh, updateServiceWorker } = useRegisterSW({
-  onRegistered(registration) {
+  onRegistered(registration: ServiceWorkerRegistration | undefined) {
     console.log('PWA: Service worker registered');
     
     // Check for updates every hour
@@ -50,13 +50,18 @@ const { needRefresh, updateServiceWorker } = useRegisterSW({
       }, 60 * 60 * 1000);
     }
   },
-  onRegisterError(error) {
+  onRegisterError(error: Error) {
     console.error('PWA: Service worker registration error', error);
   },
   onNeedRefresh() {
     showUpdateNotification.value = true;
   },
 });
+
+// Use needRefresh to show update notification
+if (needRefresh.value) {
+  showUpdateNotification.value = true;
+}
 
 function updateApp() {
   showUpdateNotification.value = false;

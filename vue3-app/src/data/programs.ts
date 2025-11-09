@@ -222,7 +222,7 @@ export const PROGRAMS: Program[] = [
               { name: 'Lateral Raise', sets: 4, reps: 15, restSeconds: 60, weight: null },
               { name: 'Front Raise', sets: 3, reps: 12, restSeconds: 60, weight: null },
               { name: 'Face Pulls', sets: 3, reps: 20, restSeconds: 60, weight: null },
-              { name: 'Plank', sets: 3, time: '60s', restSeconds: 60, weight: null },
+              { name: 'Plank', sets: 3, reps: 1, time: '60s', restSeconds: 60, weight: null },
               { name: 'Hanging Leg Raise', sets: 3, reps: 15, restSeconds: 60, weight: null }
             ]
           }
@@ -272,7 +272,7 @@ export const PROGRAMS: Program[] = [
               { name: 'Deficit Deadlift', sets: 3, reps: 6, restSeconds: 150, weight: null },
               { name: 'Pull-ups', sets: 4, reps: 8, restSeconds: 120, weight: null },
               { name: 'Barbell Row', sets: 3, reps: 8, restSeconds: 90, weight: null },
-              { name: 'Plank', sets: 3, time: '60s', restSeconds: 60, weight: null }
+              { name: 'Plank', sets: 3, reps: 1, time: '60s', restSeconds: 60, weight: null }
             ]
           }
         ]

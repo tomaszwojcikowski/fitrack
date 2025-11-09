@@ -77,7 +77,7 @@ const filteredWorkouts = computed(() => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
     
-    workouts = workouts.filter(workout => {
+    workouts = workouts.filter((workout: any) => {
       const workoutDate = new Date(workout.date);
       return workoutDate >= cutoffDate;
     });
@@ -85,7 +85,7 @@ const filteredWorkouts = computed(() => {
 
   // Filter by search query
   if (searchQuery.value) {
-    workouts = historyStore.searchWorkouts(searchQuery.value).filter(w => 
+    workouts = historyStore.searchWorkouts(searchQuery.value).filter((w: any) => 
       workouts.includes(w)
     );
   }
