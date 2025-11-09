@@ -175,23 +175,54 @@
                     <!-- Cloud Sync Section -->
                     <div class="sync-section">
                         <h3>☁️ Cloud Sync</h3>
-                        <p>Sync your fitness data securely with your GitHub account. Your data is stored privately in a GitHub Gist.</p>
-                        <p class="sync-note"><small>⚠️ Note: If sync fails, try disabling browser ad blockers (e.g., uBlock Origin) as they may block the authentication service.</small></p>
+                        <p>Automatically sync your fitness data with GitHub Gists. Data is stored privately and syncs every 5 minutes.</p>
                         
-                        <div class="sync-controls">
-                            <button id="sync-btn" class="sync-connect-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-                                </svg>
-                                Connect GitHub
-                            </button>
-                            <button id="disconnect-btn" class="sync-disconnect-btn" style="display: none;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                                Disconnect
-                            </button>
+                        <!-- Token Input Section (shown when not connected) -->
+                        <div id="token-section">
+                            <div class="token-instructions">
+                                <p><strong>Setup Instructions:</strong></p>
+                                <ol>
+                                    <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=FiTrack" target="_blank" rel="noopener">GitHub Token Settings</a></li>
+                                    <li>Create a token with <strong>gist</strong> scope only</li>
+                                    <li>Copy the token and paste it below</li>
+                                </ol>
+                            </div>
+                            <div class="token-input-group">
+                                <input 
+                                    type="password" 
+                                    id="github-token-input" 
+                                    class="token-input" 
+                                    placeholder="Paste your GitHub token here"
+                                    aria-label="GitHub Personal Access Token"
+                                >
+                                <button id="save-token-btn" class="btn-primary">
+                                    Connect
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Connected Section (shown when connected) -->
+                        <div id="connected-section" style="display: none;">
+                            <div class="sync-status-box">
+                                <p>✅ Connected to GitHub</p>
+                                <p class="sync-info">Auto-sync: Every 5 minutes</p>
+                            </div>
+                            <div class="sync-controls">
+                                <button id="sync-btn" class="sync-connect-btn" style="display: none;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    Sync Now
+                                </button>
+                                <button id="disconnect-btn" class="sync-disconnect-btn" style="display: none;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                    Disconnect
+                                </button>
+                            </div>
                         </div>
                         
                         <div id="sync-status" class="sync-status"></div>
@@ -258,9 +289,7 @@
 
     <script type="module" src="exercises.js"></script>
     <script type="module" src="programs.js"></script>
-    <script type="module" src="services/githubDeviceAuth.js"></script>
-    <script type="module" src="services/gistSyncService.js"></script>
-    <script type="module" src="components/syncModal.js"></script>
+    <script type="module" src="services/simpleSyncService.js"></script>
     <script type="module" src="components/setRow.js"></script>
     <script type="module" src="components/exerciseCard.js"></script>
     <script type="module" src="app.js"></script>

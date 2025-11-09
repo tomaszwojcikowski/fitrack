@@ -2549,6 +2549,74 @@ input:focus-visible {
     border: 1px solid var(--secondary-color);
 }
 
+.token-instructions {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 3px solid var(--primary-color);
+}
+
+.token-instructions ol {
+    margin: 0.5rem 0 0 1.5rem;
+    padding: 0;
+}
+
+.token-instructions li {
+    margin: 0.5rem 0;
+    color: var(--text-secondary);
+}
+
+.token-instructions a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.token-instructions a:hover {
+    text-decoration: underline;
+}
+
+.token-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.token-input {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.token-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+}
+
+.sync-status-box {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 3px solid var(--success-color);
+}
+
+.sync-status-box p {
+    margin: 0.25rem 0;
+}
+
+.sync-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
 /* Sync Modal */
 .sync-modal-overlay {
     position: fixed;
