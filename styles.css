@@ -5,6 +5,12 @@
     box-sizing: border-box;
 }
 
+/* OnePlus 12: Smooth scrolling for 120Hz display */
+html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
 :root {
     /* Semantic Color Palette - Dark Mode */
     /* Primary Colors */
@@ -123,6 +129,10 @@ body {
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     min-height: 100vh;
+    /* OnePlus 12 optimizations */
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+    touch-action: manipulation;
 }
 
 /* Accessibility - Visually Hidden */
@@ -143,6 +153,9 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    /* OnePlus 12: Support for display cutout */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
 }
 
 /* Header */
@@ -159,6 +172,11 @@ body {
     z-index: var(--z-header);
     transition: all var(--transition-base);
     backdrop-filter: blur(10px);
+    /* OnePlus 12: Hardware acceleration for 120Hz smoothness */
+    will-change: box-shadow;
+    transform: translateZ(0);
+    /* Support for display cutout */
+    padding-top: max(var(--spacing-md), env(safe-area-inset-top));
 }
 
 .app-header:hover {
@@ -180,10 +198,10 @@ body {
     background: rgba(255, 255, 255, 0.15);
     border: none;
     border-radius: var(--radius-full);
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -193,6 +211,9 @@ body {
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    /* OnePlus 12: Hardware acceleration and better touch response */
+    will-change: transform, background;
+    transform: translateZ(0);
 }
 
 .icon-btn::before {
@@ -529,6 +550,9 @@ body {
     transition: all var(--transition-slow);
     position: relative;
     animation: slideInUp 0.4s ease-out;
+    /* OnePlus 12: Hardware acceleration for smooth animations */
+    will-change: transform, box-shadow;
+    transform: translateZ(0);
 }
 
 @keyframes slideInUp {
@@ -545,7 +569,7 @@ body {
 .exercise-card:hover {
     box-shadow: var(--shadow-lg);
     border-color: var(--border-light);
-    transform: translateY(-4px) scale(1.01);
+    transform: translateY(-4px) scale(1.01) translateZ(0);
 }
 
 .exercise-card::after {
@@ -1238,6 +1262,11 @@ body {
     line-height: 1.5;
     position: relative;
     overflow: hidden;
+    min-height: 48px;
+    /* OnePlus 12: Hardware acceleration and better touch response */
+    will-change: transform, background, box-shadow;
+    transform: translateZ(0);
+    touch-action: manipulation;
 }
 
 .btn::before {
@@ -3422,6 +3451,13 @@ input:focus-visible {
     animation: fabEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    /* OnePlus 12: Hardware acceleration and touch optimization */
+    will-change: transform, box-shadow;
+    transform: translateZ(0);
+    touch-action: manipulation;
+    /* Support for display safe areas */
+    bottom: max(var(--spacing-xl), calc(env(safe-area-inset-bottom) + var(--spacing-md)));
+    right: max(var(--spacing-xl), calc(env(safe-area-inset-right) + var(--spacing-md)));
 }
 
 .fab::before {
@@ -3459,11 +3495,11 @@ input:focus-visible {
 .fab:hover {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary-hover));
     box-shadow: var(--shadow-xl);
-    transform: scale(1.15) rotate(90deg);
+    transform: scale(1.15) rotate(90deg) translateZ(0);
 }
 
 .fab:active {
-    transform: scale(0.95) rotate(90deg);
+    transform: scale(0.95) rotate(90deg) translateZ(0);
     box-shadow: var(--shadow-md);
 }
 
@@ -4333,4 +4369,168 @@ input:focus-visible {
 
 .toggle-switch input:focus + .toggle-slider {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ===================================
+   OnePlus 12 Optimizations
+   =================================== */
+
+/* High-density display optimizations (510 PPI) */
+@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
+    body {
+        /* Enhanced text rendering for high-DPI AMOLED */
+        -webkit-font-smoothing: subpixel-antialiased;
+        text-rendering: optimizeLegibility;
+    }
+    
+    /* Sharper borders and shadows for high-DPI */
+    .exercise-card,
+    .btn,
+    .icon-btn,
+    .fab {
+        border-width: 0.5px;
+    }
+    
+    /* Optimize images for high-DPI if any are added later */
+    img {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Landscape mode optimizations for large screen (6.82") */
+@media (orientation: landscape) and (min-width: 700px) {
+    .app-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 2rem;
+    }
+    
+    .current-exercises {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .stats-widgets {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .welcome-actions {
+        flex-direction: row;
+        max-width: 600px;
+    }
+    
+    .view-header {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+}
+
+/* 120Hz refresh rate optimizations */
+@media (prefers-reduced-motion: no-preference) {
+    * {
+        /* Enable smoother animations for 120Hz display */
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .btn,
+    .icon-btn,
+    .fab,
+    .exercise-card {
+        /* Faster transitions for 120Hz responsiveness */
+        transition-duration: 0.15s;
+    }
+    
+    /* Smooth scrolling optimizations */
+    .app-main,
+    .view {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* AMOLED optimization - true black for better battery life */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #000000;  /* True black for AMOLED */
+        --card-bg: #0a0a0a;   /* Near black for cards */
+    }
+}
+
+/* High refresh rate scroll optimization */
+.app-main,
+.view,
+.modal-body {
+    /* Optimize scrolling performance for 120Hz */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}
+
+/* Touch target improvements for high-density display */
+@media (pointer: coarse) and (hover: none) {
+    /* Ensure all interactive elements meet 48dp minimum */
+    .icon-btn,
+    .btn-icon,
+    .set-complete,
+    button {
+        min-width: 48px;
+        min-height: 48px;
+        padding: 12px;
+    }
+    
+    /* Larger tap targets for better ergonomics on 6.82" screen */
+    .timer-quick-btn {
+        min-height: 48px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    /* Improved spacing for comfortable one-handed use */
+    .header-actions {
+        gap: 0.75rem;
+    }
+    
+    /* Better touch feedback */
+    .btn:active,
+    .icon-btn:active,
+    .fab:active {
+        transform: scale(0.96) translateZ(0);
+        transition-duration: 0.1s;
+    }
+}
+
+/* OnePlus 12 specific viewport optimization */
+@media (min-width: 430px) and (max-width: 450px) {
+    /* Optimize for OnePlus 12 portrait width */
+    .app-header {
+        padding: 1rem 1.25rem;
+    }
+    
+    .app-main {
+        padding: 1.25rem;
+    }
+    
+    .exercise-card {
+        padding: 1.25rem;
+    }
+}
+
+/* High brightness outdoor mode - improve contrast */
+@media (prefers-contrast: high) {
+    :root {
+        --text-primary: #ffffff;
+        --text-secondary: #cbd5e1;
+        --border-color: #475569;
+    }
+    
+    .btn-primary {
+        background: #2563eb;
+    }
+    
+    .exercise-card {
+        border-width: 2px;
+    }
 }
