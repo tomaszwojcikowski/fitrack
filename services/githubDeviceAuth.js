@@ -1,9 +1,13 @@
 // GitHub Device Flow OAuth Authentication Service
 // Uses GitHub's public CLI client ID for authentication without backend
+// Note: Uses CORS proxy to enable browser-based OAuth device flow
 
 export class GitHubDeviceAuth {
     constructor() {
         this.clientId = 'Iv1.b507a08c87ecfe98';
+        // Use CORS proxy to bypass browser CORS restrictions
+        // Note: Some ad blockers may block CORS proxies. If sync fails, try disabling ad blockers.
+        this.corsProxy = 'https://cors.sh/';
         this.deviceCodeUrl = 'https://github.com/login/device/code';
         this.accessTokenUrl = 'https://github.com/login/oauth/access_token';
         this.scope = 'gist';
@@ -15,7 +19,7 @@ export class GitHubDeviceAuth {
      */
     async requestDeviceCode() {
         try {
-            const response = await fetch(this.deviceCodeUrl, {
+            const response = await fetch(this.corsProxy + this.deviceCodeUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,7 +46,7 @@ export class GitHubDeviceAuth {
             };
         } catch (error) {
             console.error('Error requesting device code:', error);
-            throw new Error('Failed to start authentication. Please check your network connection.');
+            throw new Error('Failed to start authentication. Please check your network connection and disable ad blockers if enabled.');
         }
     }
 
@@ -66,7 +70,7 @@ export class GitHubDeviceAuth {
                 }
 
                 try {
-                    const response = await fetch(this.accessTokenUrl, {
+                    const response = await fetch(this.corsProxy + this.accessTokenUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
