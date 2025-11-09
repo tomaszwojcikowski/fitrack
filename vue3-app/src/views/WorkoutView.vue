@@ -56,6 +56,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useWorkoutStore } from '@/stores/workout';
+import { useHistoryStore } from '@/stores/history';
 import { useExerciseStore } from '@/stores/exercises';
 import ExerciseCard from '@/components/ExerciseCard.vue';
 import ExercisePicker from '@/components/ExercisePicker.vue';
@@ -63,6 +64,7 @@ import type { Exercise } from '@/types';
 
 const router = useRouter();
 const workoutStore = useWorkoutStore();
+const historyStore = useHistoryStore();
 const exerciseStore = useExerciseStore();
 
 const showExercisePicker = ref(false);
@@ -71,9 +73,37 @@ function selectExercise(exercise: Exercise) {
   workoutStore.addExercise(exercise);
 }
 
-function finishWorkout() {
-  // TODO: Save to history
+async function finishWorkout() {
+  if (!workoutStore.hasExercises) {
+    return;
+  }
+
+  // Confirm if there are incomplete sets
+  const incompleteSets = workoutStore.currentWorkout.some(ex => 
+    ex.sets.some(set => !set.completed)
+  );
+  
+  if (incompleteSets) {
+    const confirmed = confirm(
+      'You have incomplete sets. Do you want to finish this workout anyway?'
+    );
+    if (!confirmed) {
+      return;
+    }
+  }
+
+  // Save workout to history
+  historyStore.saveWorkout({
+    date: workoutStore.workoutDate,
+    exercises: workoutStore.currentWorkout,
+    startTime: workoutStore.workoutStartTime,
+    endTime: new Date().toISOString(),
+  });
+
+  // Clear current workout
   workoutStore.clearWorkout();
+  
+  // Navigate to history
   router.push('/history');
 }
 
