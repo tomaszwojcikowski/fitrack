@@ -278,8 +278,20 @@ body {
 /* ==========================================
    HOME SCREEN SPECIFIC STYLES
    ========================================== */
+.home-screen-sections {
+    display: block;
+}
+
+.home-screen-sections.hidden {
+    display: none;
+}
+
 .continue-program-section {
     margin-bottom: 1.5rem;
+}
+
+.continue-program-section.hidden {
+    display: none;
 }
 
 .continue-program-card {
@@ -287,7 +299,7 @@ body {
     border-radius: 12px;
     padding: 1.25rem;
     color: white;
-    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .continue-program-card h3 {
@@ -311,10 +323,45 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-start-fresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    font-size: 1rem;
+    background: var(--card-bg);
+    border: 2px dashed var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.btn-start-fresh:hover {
+    background: var(--card-hover);
+    border-color: var(--primary-color);
+    border-style: solid;
+    color: var(--text-primary);
+}
+
+.btn-start-fresh svg {
+    width: 24px;
+    height: 24px;
 }
 
 .recent-history-section {
     margin-bottom: 1.5rem;
+}
+
+.recent-history-section.hidden {
+    display: none;
 }
 
 .recent-history-header {
@@ -329,10 +376,62 @@ body {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 500;
+    transition: color 0.2s;
 }
 
 .view-all-link:hover {
+    color: var(--primary-light);
     text-decoration: underline;
+}
+
+.recent-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recent-workout-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.recent-workout-card:hover {
+    background: var(--card-hover);
+    transform: translateX(4px);
+    border-color: var(--border-light);
+}
+
+.recent-workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.recent-workout-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.recent-workout-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.recent-workout-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.recent-workout-preview {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
 }
 
 /* ==========================================
