@@ -1,0 +1,660 @@
+/* FiTrack UI Redesign Styles */
+/* Modern mobile-first interface with bottom navigation */
+
+/* ==========================================
+   TYPOGRAPHY - Inter Font
+   ========================================== */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* ==========================================
+   COLOR SCHEME UPDATE
+   ========================================== */
+:root {
+    /* Background Colors - Darker */
+    --bg-color: #030712;
+    --bg-secondary: #0F172A;
+    --card-bg: #111827;
+    --card-hover: #1F2937;
+    --input-bg: #1F2937;
+    --hover-bg: #374151;
+    
+    /* Primary Blue */
+    --primary-color: #3B82F6;
+    --primary-dark: #2563EB;
+    --primary-light: #60A5FA;
+    --primary-hover: #1D4ED8;
+    
+    /* Text Colors */
+    --text-primary: #FFFFFF;
+    --text-secondary: #9CA3AF;
+    --text-tertiary: #6B7280;
+    
+    /* Border Colors */
+    --border-color: #1F2937;
+    --border-light: #374151;
+    
+    /* Updated spacing for bottom nav */
+    --bottom-nav-height: 80px;
+}
+
+body {
+    background-color: var(--bg-color);
+}
+
+/* ==========================================
+   HEADER REDESIGN
+   ========================================== */
+.app-header {
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    box-shadow: none;
+    backdrop-filter: none;
+    /* Remove gradient */
+    background: var(--bg-color);
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Hide old header actions */
+.header-actions {
+    display: none;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border: 2px solid var(--border-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    border-color: var(--primary-color);
+}
+
+/* ==========================================
+   BOTTOM NAVIGATION
+   ========================================== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem 0 max(0.5rem, env(safe-area-inset-bottom));
+    z-index: var(--z-header);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.2s;
+    position: relative;
+    max-width: 100px;
+}
+
+.nav-item svg {
+    width: 24px;
+    height: 24px;
+    transition: all 0.2s;
+}
+
+.nav-item span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    color: var(--text-secondary);
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+.nav-item.active svg {
+    transform: translateY(-2px);
+}
+
+.nav-item.active span {
+    font-weight: 600;
+}
+
+/* Active indicator */
+.nav-item::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 40px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 0 0 3px 3px;
+    transition: transform 0.2s;
+}
+
+.nav-item.active::before {
+    transform: translateX(-50%) scaleX(1);
+}
+
+/* ==========================================
+   MAIN CONTENT ADJUSTMENT
+   ========================================== */
+.app-main {
+    padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+}
+
+/* ==========================================
+   CARD STYLES UPDATE
+   ========================================== */
+.exercise-card,
+.history-card,
+.program-card,
+.stat-card {
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+/* ==========================================
+   BUTTON STYLES UPDATE
+   ========================================== */
+.btn-primary {
+    background: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* ==========================================
+   HIDE OLD UI ELEMENTS
+   ========================================== */
+/* Hide old header icon buttons */
+#dashboardBtn,
+#programsBtn, 
+#historyBtn,
+#settingsBtn {
+    display: none;
+}
+
+/* Hide FAB and Quick Rest Button (not needed with bottom nav) */
+.fab,
+.quick-rest-btn,
+#addExerciseFab,
+#quickRestBtn {
+    display: none !important;
+}
+
+/* Hide floating workout button */
+.floating-workout-btn,
+#currentWorkoutBtn {
+    display: none !important;
+}
+
+/* ==========================================
+   VIEW-SPECIFIC HEADER UPDATES
+   ========================================== */
+/* Update header based on active view */
+.view.active ~ .app-header #headerTitle {
+    /* Will be updated via JavaScript */
+}
+
+/* Workout view - show New Workout title */
+#workoutView.active ~ .app-header h1 {
+    text-align: center;
+}
+
+/* ==========================================
+   WELCOME SECTION UPDATES
+   ========================================== */
+.welcome-section {
+    margin-bottom: 1.5rem;
+}
+
+.welcome-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+/* ==========================================
+   HOME SCREEN SPECIFIC STYLES
+   ========================================== */
+.home-screen-sections {
+    display: block;
+}
+
+.home-screen-sections.hidden {
+    display: none;
+}
+
+.continue-program-section {
+    margin-bottom: 1.5rem;
+}
+
+.continue-program-section.hidden {
+    display: none;
+}
+
+.continue-program-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: 12px;
+    padding: 1.25rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.continue-program-card h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.continue-program-card p {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.start-fresh-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-start-fresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    font-size: 1rem;
+    background: var(--card-bg);
+    border: 2px dashed var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.btn-start-fresh:hover {
+    background: var(--card-hover);
+    border-color: var(--primary-color);
+    border-style: solid;
+    color: var(--text-primary);
+}
+
+.btn-start-fresh svg {
+    width: 24px;
+    height: 24px;
+}
+
+.recent-history-section {
+    margin-bottom: 1.5rem;
+}
+
+.recent-history-section.hidden {
+    display: none;
+}
+
+.recent-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.view-all-link {
+    font-size: 0.875rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.view-all-link:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+.recent-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recent-workout-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.recent-workout-card:hover {
+    background: var(--card-hover);
+    transform: translateX(4px);
+    border-color: var(--border-light);
+}
+
+.recent-workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.recent-workout-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.recent-workout-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.recent-workout-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.recent-workout-preview {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+/* ==========================================
+   HISTORY CARD UPDATES
+   ========================================== */
+.history-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.history-card:hover {
+    background: var(--card-hover);
+    transform: translateX(4px);
+}
+
+.history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.history-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.history-card-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.history-card-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.history-card-preview {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================== */
+@media (max-width: 640px) {
+    .app-header {
+        padding: 0.875rem 1rem;
+    }
+    
+    .app-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 0.8125rem;
+    }
+}
+
+/* ==========================================
+   WORKOUT IN PROGRESS HEADER
+   ========================================== */
+.app-header.workout-active {
+    justify-content: space-between;
+}
+
+.app-header.workout-active .header-left {
+    flex: 1;
+}
+
+.app-header.workout-active .header-right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.app-header.workout-active h1 {
+    text-align: center;
+    flex: 1;
+}
+
+.header-cancel-btn,
+.header-finish-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.header-cancel-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.header-finish-btn {
+    color: var(--primary-color);
+}
+
+.header-finish-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-light);
+}
+
+/* ==========================================
+   IMPROVED INPUT STYLES
+   ========================================== */
+.set-input input {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.set-input input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ==========================================
+   WORKOUT DURATION TIMER
+   ========================================== */
+.workout-duration {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+/* ==========================================
+   TEMPLATE/PROGRAM CARDS
+   ========================================== */
+.template-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.template-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+}
+
+.template-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.template-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.template-card-arrow {
+    color: var(--text-tertiary);
+}
+
+.template-card-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   PROGRESS/DASHBOARD STYLES
+   ========================================== */
+.progress-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.progress-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+}
+
+.progress-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progress-card-1rm {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.progress-card.expanded .progress-card-chart {
+    display: block;
+}
+
+.progress-card-chart {
+    display: none;
+    margin-top: 1rem;
+}
+
+/* ==========================================
+   ANIMATION IMPROVEMENTS
+   ========================================== */
+.nav-item,
+.history-card,
+.template-card,
+.exercise-card {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+    touch-action: manipulation;
+}

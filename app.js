@@ -412,7 +412,28 @@ class FiTrackApp {
 
     // Event Listeners
     setupEventListeners() {
-        // Navigation
+        // Bottom Navigation
+        const navHomeBtn = document.getElementById('navHomeBtn');
+        if (navHomeBtn) {
+            navHomeBtn.addEventListener('click', () => this.showWorkout());
+        }
+        
+        const navHistoryBtn = document.getElementById('navHistoryBtn');
+        if (navHistoryBtn) {
+            navHistoryBtn.addEventListener('click', () => this.showHistory());
+        }
+        
+        const navTemplatesBtn = document.getElementById('navTemplatesBtn');
+        if (navTemplatesBtn) {
+            navTemplatesBtn.addEventListener('click', () => this.showPrograms());
+        }
+        
+        const navProgressBtn = document.getElementById('navProgressBtn');
+        if (navProgressBtn) {
+            navProgressBtn.addEventListener('click', () => this.showDashboard());
+        }
+        
+        // Old Navigation (kept for compatibility)
         const dashboardBtn = document.getElementById('dashboardBtn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', () => this.showDashboard());
@@ -530,7 +551,8 @@ class FiTrackApp {
             this.openExercisePickerModal();
         });
 
-        document.getElementById('clearSearch').addEventListener('click', () => {
+        const clearSearchElem = document.getElementById('clearSearch');
+        if (clearSearchElem) clearSearchElem.addEventListener('click', () => {
             this.clearSearch();
         });
 
@@ -588,23 +610,53 @@ class FiTrackApp {
                 this.hideWelcomeSection();
             });
         }
+        
+        // Home screen new buttons
+        const startEmptyWorkoutBtn = document.getElementById('startEmptyWorkout');
+        if (startEmptyWorkoutBtn) {
+            startEmptyWorkoutBtn.addEventListener('click', () => {
+                // Just hide the home screen sections to show the workout interface
+                const homeScreenSections = document.getElementById('homeScreenSections');
+                const exerciseSelection = document.querySelector('.exercise-selection');
+                const currentExercises = document.getElementById('currentExercises');
+                
+                if (homeScreenSections) homeScreenSections.classList.add('hidden');
+                if (exerciseSelection) exerciseSelection.classList.remove('hidden');
+                if (currentExercises) currentExercises.classList.remove('hidden');
+            });
+        }
+        
+        const startProgramDayBtn = document.getElementById('startProgramDay');
+        if (startProgramDayBtn) {
+            startProgramDayBtn.addEventListener('click', () => {
+                this.loadProgramWorkout();
+            });
+        }
 
-        // Navigation
-        document.getElementById('historyBtn').addEventListener('click', () => {
-            this.showHistory();
-        });
+        // Navigation (old buttons - kept for compatibility)
+        const historyBtn = document.getElementById('historyBtn');
+        if (historyBtn) {
+            historyBtn.addEventListener('click', () => {
+                this.showHistory();
+            });
+        }
 
-        document.getElementById('backToWorkout').addEventListener('click', () => {
-            this.showWorkout();
-        });
+        const backToWorkoutBtn = document.getElementById('backToWorkout');
+        if (backToWorkoutBtn) {
+            backToWorkoutBtn.addEventListener('click', () => {
+                this.showWorkout();
+            });
+        }
 
         // Quick rest button
-        document.getElementById('quickRestBtn').addEventListener('click', () => {
+        const quickRestBtnElem = document.getElementById('quickRestBtn');
+        if (quickRestBtnElem) quickRestBtnElem.addEventListener('click', () => {
             this.startRestTimer(90); // Default 90 seconds
         });
 
         // Timer controls
-        document.getElementById('timerStop').addEventListener('click', () => {
+        const timerStopElem = document.getElementById('timerStop');
+        if (timerStopElem) timerStopElem.addEventListener('click', () => {
             this.stopRestTimer();
         });
 
@@ -649,21 +701,25 @@ class FiTrackApp {
         }
 
         // Workout date
-        document.getElementById('workoutDate').addEventListener('change', (e) => {
+        const workoutDateElem = document.getElementById('workoutDate');
+        if (workoutDateElem) workoutDateElem.addEventListener('change', (e) => {
             // Date changed, could trigger save
         });
 
         // Finish workout button
-        document.getElementById('finishWorkoutBtn').addEventListener('click', () => {
+        const finishWorkoutBtnElem = document.getElementById('finishWorkoutBtn');
+        if (finishWorkoutBtnElem) finishWorkoutBtnElem.addEventListener('click', () => {
             this.finishWorkout();
         });
 
         // Programs
-        document.getElementById('programsBtn').addEventListener('click', () => {
+        const programsBtnElem = document.getElementById('programsBtn');
+        if (programsBtnElem) programsBtnElem.addEventListener('click', () => {
             this.showPrograms();
         });
 
-        document.getElementById('backToWorkoutFromPrograms').addEventListener('click', () => {
+        const backToWorkoutFromProgramsElem = document.getElementById('backToWorkoutFromPrograms');
+        if (backToWorkoutFromProgramsElem) backToWorkoutFromProgramsElem.addEventListener('click', () => {
             this.showWorkout();
         });
 
@@ -769,6 +825,122 @@ class FiTrackApp {
         this.updateProgramIndicator();
         this.updateCurrentWorkoutButton();
         this.updateFAB();
+        this.updateHomeScreen();
+    }
+    
+    updateHomeScreen() {
+        const homeScreenSections = document.getElementById('homeScreenSections');
+        const welcomeSection = document.getElementById('welcomeSection');
+        const continueProgramSection = document.getElementById('continueProgramSection');
+        const recentHistorySection = document.getElementById('recentHistorySection');
+        const exerciseSelection = document.querySelector('.exercise-selection');
+        const currentExercises = document.getElementById('currentExercises');
+        
+        if (!homeScreenSections) return; // Guard for tests
+        
+        // Show home screen sections only when there's no current workout
+        if (this.currentWorkout.length === 0) {
+            homeScreenSections.classList.remove('hidden');
+            if (welcomeSection) welcomeSection.classList.add('hidden');
+            if (exerciseSelection) exerciseSelection.classList.add('hidden');
+            if (currentExercises) currentExercises.classList.add('hidden');
+            
+            // Show Continue Program section if there's an active program
+            if (this.activeProgram && continueProgramSection) {
+                continueProgramSection.classList.remove('hidden');
+                const program = this.getProgramById(this.activeProgram.programId);
+                if (program) {
+                    const week = program.weeks.find(w => w.week === this.activeProgram.currentWeek);
+                    const day = week?.days.find(d => d.day === this.activeProgram.currentDay);
+                    
+                    document.getElementById('activeProgramName').textContent = program.name;
+                    document.getElementById('activeProgramNext').textContent = day ? `Next: ${day.name}` : 'Continue Program';
+                    
+                    const startBtn = document.getElementById('startProgramDay');
+                    startBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Start "${day ? day.name : 'Workout'}"
+                    `;
+                }
+            } else if (continueProgramSection) {
+                continueProgramSection.classList.add('hidden');
+            }
+            
+            // Show Recent History section if there are workouts
+            if (this.workoutHistory.length > 0 && recentHistorySection) {
+                recentHistorySection.classList.remove('hidden');
+                this.renderRecentHistory();
+            } else if (recentHistorySection) {
+                recentHistorySection.classList.add('hidden');
+            }
+        } else {
+            // Hide home screen sections when workout is in progress
+            homeScreenSections.classList.add('hidden');
+            if (exerciseSelection) exerciseSelection.classList.remove('hidden');
+            if (currentExercises) currentExercises.classList.remove('hidden');
+        }
+    }
+    
+    renderRecentHistory() {
+        const recentHistoryList = document.getElementById('recentHistoryList');
+        if (!recentHistoryList) return;
+        
+        // Show only the 3 most recent workouts
+        const recentWorkouts = this.workoutHistory.slice(0, 3);
+        
+        if (recentWorkouts.length === 0) {
+            recentHistoryList.innerHTML = '<p class="empty-state">No workout history yet.</p>';
+            return;
+        }
+        
+        recentHistoryList.innerHTML = recentWorkouts.map(workout => {
+            const date = new Date(workout.date);
+            const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // Calculate duration
+            const duration = workout.duration ? this.formatDuration(workout.duration) : 'N/A';
+            
+            // Get exercise count
+            const exerciseCount = workout.exercises ? workout.exercises.length : 0;
+            
+            // Get first exercise preview
+            let preview = '';
+            if (workout.exercises && workout.exercises.length > 0) {
+                const firstEx = workout.exercises[0];
+                const setCount = firstEx.sets ? firstEx.sets.filter(s => s.completed).length : 0;
+                const weight = firstEx.sets && firstEx.sets.length > 0 ? firstEx.sets[0].weight : 0;
+                preview = `${firstEx.name}: ${setCount} sets${weight ? `, ${weight}kg` : ''}`;
+            }
+            
+            return `
+                <div class="recent-workout-card" data-workout-date="${workout.date}">
+                    <div class="recent-workout-header">
+                        <div class="recent-workout-name">${workout.name || 'Workout'}</div>
+                        <div class="recent-workout-date">${formattedDate}</div>
+                    </div>
+                    <div class="recent-workout-meta">${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''}, ${duration}</div>
+                    ${preview ? `<div class="recent-workout-preview">${preview}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+        
+        // Add click handlers to recent workout cards
+        recentHistoryList.querySelectorAll('.recent-workout-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.showHistory();
+            });
+        });
+    }
+    
+    formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes} min`;
     }
 
     updateQuickRestButton() {
@@ -1526,6 +1698,41 @@ class FiTrackApp {
     }
 
     // Navigation
+    updateBottomNav(activeView) {
+        // Update bottom navigation active state
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.view === activeView) {
+                item.classList.add('active');
+            }
+        });
+        
+        // Update header title based on active view
+        const headerTitle = document.getElementById('headerTitle');
+        if (headerTitle) {
+            switch(activeView) {
+                case 'workout':
+                    headerTitle.textContent = 'FiTrack';
+                    break;
+                case 'history':
+                    headerTitle.textContent = 'History';
+                    break;
+                case 'programs':
+                    headerTitle.textContent = 'Templates';
+                    break;
+                case 'dashboard':
+                    headerTitle.textContent = 'Progress';
+                    break;
+                case 'settings':
+                    headerTitle.textContent = 'Settings';
+                    break;
+                default:
+                    headerTitle.textContent = 'FiTrack';
+            }
+        }
+    }
+
     showHistory() {
         document.getElementById('workoutView').classList.remove('active');
         document.getElementById('programsView').classList.remove('active');
@@ -1535,6 +1742,9 @@ class FiTrackApp {
         if (dashboardView) dashboardView.classList.remove('active');
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
+        
+        // Update bottom nav
+        this.updateBottomNav('history');
         
         // Use new enhanced history rendering
         if (this.historyViewMode === 'calendar') {
@@ -1553,6 +1763,10 @@ class FiTrackApp {
         if (settingsView) settingsView.classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
         window.location.hash = 'workout';
+        
+        // Update bottom nav
+        this.updateBottomNav('workout');
+        
         this.updateCurrentWorkoutButton();
     }
 
@@ -1565,6 +1779,10 @@ class FiTrackApp {
         document.getElementById('programsView').classList.remove('active');
         settingsView.classList.add('active');
         window.location.hash = 'settings';
+        
+        // Update bottom nav
+        this.updateBottomNav('settings');
+        
         this.updateCurrentWorkoutButton();
         
         // Update sync UI when showing settings
@@ -1629,6 +1847,10 @@ class FiTrackApp {
         if (settingsView) settingsView.classList.remove('active');
         document.getElementById('programsView').classList.add('active');
         window.location.hash = 'programs';
+        
+        // Update bottom nav
+        this.updateBottomNav('programs');
+        
         this.renderPrograms();
         this.updateCurrentWorkoutButton();
     }
@@ -2679,6 +2901,9 @@ class FiTrackApp {
         // Show dashboard
         dashboardView.classList.add('active');
         window.location.hash = 'dashboard';
+        
+        // Update bottom nav
+        this.updateBottomNav('dashboard');
         
         // Render dashboard content
         this.dashboard.render();
