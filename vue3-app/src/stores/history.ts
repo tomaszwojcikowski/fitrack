@@ -122,7 +122,7 @@ export const useHistoryStore = defineStore('history', () => {
   function saveWorkout(workout: Omit<Workout, 'id'>) {
     const newWorkout: Workout = {
       ...workout,
-      id: `workout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `workout-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     };
     workouts.value.push(newWorkout);
     return newWorkout;

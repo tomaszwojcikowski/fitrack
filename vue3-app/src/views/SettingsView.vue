@@ -99,10 +99,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useWorkoutStore } from '../stores/workout';
-import { useHistoryStore } from '../stores/history';
-import { useExerciseStore } from '../stores/exercises';
-import { useProgramsStore } from '../stores/programs';
+import { useWorkoutStore } from '@/stores/workout';
+import { useHistoryStore } from '@/stores/history';
+import { useExerciseStore } from '@/stores/exercises';
+import { useProgramsStore } from '@/stores/programs';
 
 const workoutStore = useWorkoutStore();
 const historyStore = useHistoryStore();
