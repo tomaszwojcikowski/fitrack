@@ -414,11 +414,12 @@
 
 .confetti {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: var(--warning-color);
     opacity: 0;
-    animation: confettiFall 3s ease-out infinite;
+    animation: confettiFall 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+    border-radius: 2px;
 }
 
 .confetti:nth-child(1) {
@@ -485,12 +486,16 @@
     0% {
         top: -10%;
         opacity: 1;
-        transform: translateX(0) rotate(0deg);
+        transform: translateX(0) rotate(0deg) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateX(100px) rotate(360deg) scale(1.2);
     }
     100% {
-        top: 100%;
+        top: 110%;
         opacity: 0;
-        transform: translateX(50px) rotate(720deg);
+        transform: translateX(-30px) rotate(720deg) scale(0.5);
     }
 }
 
