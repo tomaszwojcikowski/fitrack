@@ -412,7 +412,28 @@ class FiTrackApp {
 
     // Event Listeners
     setupEventListeners() {
-        // Navigation
+        // Bottom Navigation
+        const navHomeBtn = document.getElementById('navHomeBtn');
+        if (navHomeBtn) {
+            navHomeBtn.addEventListener('click', () => this.showWorkout());
+        }
+        
+        const navHistoryBtn = document.getElementById('navHistoryBtn');
+        if (navHistoryBtn) {
+            navHistoryBtn.addEventListener('click', () => this.showHistory());
+        }
+        
+        const navTemplatesBtn = document.getElementById('navTemplatesBtn');
+        if (navTemplatesBtn) {
+            navTemplatesBtn.addEventListener('click', () => this.showPrograms());
+        }
+        
+        const navProgressBtn = document.getElementById('navProgressBtn');
+        if (navProgressBtn) {
+            navProgressBtn.addEventListener('click', () => this.showDashboard());
+        }
+        
+        // Old Navigation (kept for compatibility)
         const dashboardBtn = document.getElementById('dashboardBtn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', () => this.showDashboard());
@@ -1526,6 +1547,41 @@ class FiTrackApp {
     }
 
     // Navigation
+    updateBottomNav(activeView) {
+        // Update bottom navigation active state
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.view === activeView) {
+                item.classList.add('active');
+            }
+        });
+        
+        // Update header title based on active view
+        const headerTitle = document.getElementById('headerTitle');
+        if (headerTitle) {
+            switch(activeView) {
+                case 'workout':
+                    headerTitle.textContent = 'FiTrack';
+                    break;
+                case 'history':
+                    headerTitle.textContent = 'History';
+                    break;
+                case 'programs':
+                    headerTitle.textContent = 'Templates';
+                    break;
+                case 'dashboard':
+                    headerTitle.textContent = 'Progress';
+                    break;
+                case 'settings':
+                    headerTitle.textContent = 'Settings';
+                    break;
+                default:
+                    headerTitle.textContent = 'FiTrack';
+            }
+        }
+    }
+
     showHistory() {
         document.getElementById('workoutView').classList.remove('active');
         document.getElementById('programsView').classList.remove('active');
@@ -1535,6 +1591,9 @@ class FiTrackApp {
         if (dashboardView) dashboardView.classList.remove('active');
         document.getElementById('historyView').classList.add('active');
         window.location.hash = 'history';
+        
+        // Update bottom nav
+        this.updateBottomNav('history');
         
         // Use new enhanced history rendering
         if (this.historyViewMode === 'calendar') {
@@ -1553,6 +1612,10 @@ class FiTrackApp {
         if (settingsView) settingsView.classList.remove('active');
         document.getElementById('workoutView').classList.add('active');
         window.location.hash = 'workout';
+        
+        // Update bottom nav
+        this.updateBottomNav('workout');
+        
         this.updateCurrentWorkoutButton();
     }
 
@@ -1565,6 +1628,10 @@ class FiTrackApp {
         document.getElementById('programsView').classList.remove('active');
         settingsView.classList.add('active');
         window.location.hash = 'settings';
+        
+        // Update bottom nav
+        this.updateBottomNav('settings');
+        
         this.updateCurrentWorkoutButton();
         
         // Update sync UI when showing settings
@@ -1629,6 +1696,10 @@ class FiTrackApp {
         if (settingsView) settingsView.classList.remove('active');
         document.getElementById('programsView').classList.add('active');
         window.location.hash = 'programs';
+        
+        // Update bottom nav
+        this.updateBottomNav('programs');
+        
         this.renderPrograms();
         this.updateCurrentWorkoutButton();
     }
@@ -2679,6 +2750,9 @@ class FiTrackApp {
         // Show dashboard
         dashboardView.classList.add('active');
         window.location.hash = 'dashboard';
+        
+        // Update bottom nav
+        this.updateBottomNav('dashboard');
         
         // Render dashboard content
         this.dashboard.render();
