@@ -433,11 +433,7 @@ body {
 }
 
 .set-row-wrapper {
-    position: relative;
-    overflow: hidden;
     margin-bottom: 0.5rem;
-    background: var(--danger-color);
-    border-radius: 8px;
 }
 
 .set-row {
@@ -445,7 +441,6 @@ body {
     grid-template-columns: 30px 1fr 1fr auto;
     gap: 0.5rem;
     align-items: end;
-    margin-bottom: 0.5rem;
     padding: 0.5rem;
     background: var(--card-bg);
     border-radius: 8px;
@@ -2409,25 +2404,65 @@ input:focus-visible {
     }
 }
 
+/* Settings View */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+.settings-section {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.settings-section h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-section p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.settings-section p:last-child {
+    margin-bottom: 0;
+}
+
 /* Cloud Sync Styles */
 .sync-section {
     background-color: var(--card-bg);
     border-radius: 12px;
     padding: 1.5rem;
-    margin: 1rem;
     box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
 }
 
 .sync-section h3 {
     font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .sync-section p {
     color: var(--text-secondary);
     margin-bottom: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
 }
 
 .sync-controls {
