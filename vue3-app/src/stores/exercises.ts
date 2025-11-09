@@ -88,6 +88,8 @@ export const useExerciseStore = defineStore('exercises', () => {
     exercises,
     favoriteExercises,
     recentExercises,
+    favoriteExerciseIds,
+    recentExerciseIds,
     getExercise,
     searchExercises,
     addToFavorites,

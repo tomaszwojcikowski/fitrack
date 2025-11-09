@@ -65,20 +65,23 @@ export interface Workout {
 }
 
 export interface ProgramExercise {
-  exerciseId: string;
+  name: string;
   sets: number;
-  reps: string;
-  rest: number;
+  reps: number | string;
+  restSeconds: number;
+  weight?: number | null;
+  time?: string;
   notes?: string;
 }
 
 export interface ProgramDay {
+  day: number;
   name: string;
   exercises: ProgramExercise[];
 }
 
 export interface ProgramWeek {
-  name: string;
+  week: number;
   days: ProgramDay[];
 }
 
@@ -86,8 +89,10 @@ export interface Program {
   id: string;
   name: string;
   description: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  duration: string;
+  duration: number;
+  daysPerWeek: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  goal: string;
   weeks: ProgramWeek[];
 }
 
@@ -95,8 +100,7 @@ export interface ActiveProgram {
   programId: string;
   currentWeek: number;
   currentDay: number;
-  startedAt: string;
-  completedDays: string[];
+  startDate: string;
 }
 
 export interface PersonalRecord {

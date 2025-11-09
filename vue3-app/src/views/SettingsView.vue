@@ -129,8 +129,8 @@ function exportData() {
     exportDate: new Date().toISOString(),
     workout: workoutStore.currentWorkout,
     history: historyStore.workouts,
-    favorites: exerciseStore.favorites,
-    recentExercises: exerciseStore.recentExercises,
+    favorites: exerciseStore.favoriteExerciseIds,
+    recentExercises: exerciseStore.recentExerciseIds,
     activeProgram: programsStore.activeProgram,
     completedDays: programsStore.completedDays,
   };
@@ -164,8 +164,8 @@ function importData(event: Event) {
       // Import data
       if (data.workout) workoutStore.currentWorkout = data.workout;
       if (data.history) historyStore.workouts = data.history;
-      if (data.favorites) exerciseStore.favorites = data.favorites;
-      if (data.recentExercises) exerciseStore.recentExercises = data.recentExercises;
+      if (data.favorites) exerciseStore.favoriteExerciseIds = data.favorites;
+      if (data.recentExercises) exerciseStore.recentExerciseIds = data.recentExercises;
       if (data.activeProgram) programsStore.activeProgram = data.activeProgram;
       if (data.completedDays) programsStore.completedDays = data.completedDays;
 
@@ -186,8 +186,8 @@ function clearAllData() {
   if (confirmation === 'DELETE') {
     workoutStore.clearWorkout();
     historyStore.clearHistory();
-    exerciseStore.favorites = [];
-    exerciseStore.recentExercises = [];
+    exerciseStore.favoriteExerciseIds = [];
+    exerciseStore.recentExerciseIds = [];
     programsStore.endProgram();
     programsStore.completedDays = [];
     

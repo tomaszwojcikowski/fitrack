@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useStorage } from '@vueuse/core';
-import type { Workout, WorkoutExercise, WorkoutStats } from '@/types';
+import type { Workout, WorkoutStats } from '../types';
 
 export const useHistoryStore = defineStore('history', () => {
   // State

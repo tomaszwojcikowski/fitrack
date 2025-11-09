@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useStorage } from '@vueuse/core';
 import type { Program, ActiveProgram } from '../types';
 import { PROGRAMS } from '../data/programs';
