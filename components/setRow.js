@@ -16,13 +16,6 @@ export function renderSetRow(set, exIndex, setIndex, isNextIncomplete = false) {
                 <div class="set-input">
                     <label>
                         Weight (kg)
-                        ${set.weight && !set.completed ? `<button class="apply-to-all-btn" onclick="app.applyWeightToAll(${exIndex}, ${setIndex})" title="Apply to all remaining sets" aria-label="Apply weight to all remaining sets">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="7 17 2 12 7 7"></polyline>
-                                <polyline points="12 17 7 12 12 7"></polyline>
-                                <line x1="12" y1="12" x2="22" y2="12"></line>
-                            </svg>
-                        </button>` : ''}
                     </label>
                     <input type="number" 
                         value="${set.weight}" 
@@ -37,13 +30,6 @@ export function renderSetRow(set, exIndex, setIndex, isNextIncomplete = false) {
                 <div class="set-input">
                     <label>
                         ${set.useTime ? 'Time' : 'Reps'}
-                        ${!set.useTime && set.reps && !set.completed ? `<button class="apply-to-all-btn" onclick="app.applyRepsToAll(${exIndex}, ${setIndex})" title="Apply to all remaining sets" aria-label="Apply reps to all remaining sets">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="7 17 2 12 7 7"></polyline>
-                                <polyline points="12 17 7 12 12 7"></polyline>
-                                <line x1="12" y1="12" x2="22" y2="12"></line>
-                            </svg>
-                        </button>` : ''}
                         <button class="toggle-type-btn" onclick="app.toggleSetInputType(${exIndex}, ${setIndex})" title="Toggle between reps and time" aria-label="Switch to ${set.useTime ? 'reps' : 'time'} tracking">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="17 1 21 5 17 9"></polyline>
