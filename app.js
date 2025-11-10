@@ -370,6 +370,7 @@ class FiTrackApp {
                 const data = JSON.parse(saved);
                 this.workoutHistory = data.history || [];
                 this.activeProgram = data.activeProgram || null;
+                this.currentWorkout = data.currentWorkout || [];
             } catch (e) {
                 console.error('Error loading data:', e);
             }
@@ -396,7 +397,8 @@ class FiTrackApp {
     saveData() {
         const data = {
             history: this.workoutHistory,
-            activeProgram: this.activeProgram
+            activeProgram: this.activeProgram,
+            currentWorkout: this.currentWorkout
         };
         localStorage.setItem('fitrack_data', JSON.stringify(data));
         
@@ -1246,6 +1248,7 @@ class FiTrackApp {
 
     updateSet(exerciseIndex, setIndex, field, value) {
         this.currentWorkout[exerciseIndex].sets[setIndex][field] = value;
+        this.saveData();
     }
 
     applyWeightToAll(exerciseIndex, setIndex) {

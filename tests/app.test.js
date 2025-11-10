@@ -145,6 +145,29 @@ describe('FiTrackApp', () => {
       app.toggleSetComplete(0, 0)
       expect(app.restTimerSeconds).toBe(90)
     })
+
+    it('should auto-save when updating set values', () => {
+      app.updateSet(0, 0, 'reps', '10')
+      app.updateSet(0, 0, 'weight', '50')
+      
+      const saved = localStorage.getItem('fitrack_data')
+      expect(saved).toBeTruthy()
+      const parsed = JSON.parse(saved)
+      expect(parsed.currentWorkout).toHaveLength(1)
+      expect(parsed.currentWorkout[0].sets[0].reps).toBe('10')
+      expect(parsed.currentWorkout[0].sets[0].weight).toBe('50')
+    })
+
+    it('should persist current workout across page reloads', () => {
+      app.updateSet(0, 0, 'reps', '12')
+      app.updateSet(0, 0, 'weight', '80')
+      
+      // Simulate page reload by creating new app instance
+      const newApp = new FiTrackApp()
+      expect(newApp.currentWorkout).toHaveLength(1)
+      expect(newApp.currentWorkout[0].sets[0].reps).toBe('12')
+      expect(newApp.currentWorkout[0].sets[0].weight).toBe('80')
+    })
   })
 
   describe('Rest Timer', () => {
