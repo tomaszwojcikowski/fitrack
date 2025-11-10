@@ -1247,38 +1247,21 @@ class FiTrackApp {
     }
 
     updateSet(exerciseIndex, setIndex, field, value) {
-        this.currentWorkout[exerciseIndex].sets[setIndex][field] = value;
+        const exercise = this.currentWorkout[exerciseIndex];
+        exercise.sets[setIndex][field] = value;
+        
+        // Automatically apply weight and reps to all remaining incomplete sets
+        if ((field === 'weight' || field === 'reps') && value) {
+            for (let i = setIndex + 1; i < exercise.sets.length; i++) {
+                if (!exercise.sets[i].completed) {
+                    exercise.sets[i][field] = value;
+                }
+            }
+            // Update UI to reflect the changes
+            this.updateUI();
+        }
+        
         this.saveData();
-    }
-
-    applyWeightToAll(exerciseIndex, setIndex) {
-        const exercise = this.currentWorkout[exerciseIndex];
-        const weight = exercise.sets[setIndex].weight;
-        
-        // Apply to all remaining sets (after this one) that aren't completed
-        for (let i = setIndex + 1; i < exercise.sets.length; i++) {
-            if (!exercise.sets[i].completed) {
-                exercise.sets[i].weight = weight;
-            }
-        }
-        
-        this.updateUI();
-        this.showToast('Weight applied to all remaining sets', 'success');
-    }
-
-    applyRepsToAll(exerciseIndex, setIndex) {
-        const exercise = this.currentWorkout[exerciseIndex];
-        const reps = exercise.sets[setIndex].reps;
-        
-        // Apply to all remaining sets (after this one) that aren't completed
-        for (let i = setIndex + 1; i < exercise.sets.length; i++) {
-            if (!exercise.sets[i].completed) {
-                exercise.sets[i].reps = reps;
-            }
-        }
-        
-        this.updateUI();
-        this.showToast('Reps applied to all remaining sets', 'success');
     }
 
     toggleSetComplete(exerciseIndex, setIndex) {
