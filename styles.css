@@ -775,6 +775,62 @@ body {
     background: rgba(16, 185, 129, 0.05);
 }
 
+/* Next set visual cue */
+.set-row-wrapper.next-set {
+    position: relative;
+    animation: highlightNextSet 2s ease-in-out infinite;
+}
+
+.set-row-wrapper.next-set::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-light));
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+}
+
+.set-row-wrapper.next-set .set-row {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: var(--primary-color);
+}
+
+@keyframes highlightNextSet {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Apply to all button */
+.apply-to-all-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-left: 4px;
+    border-radius: 4px;
+    transition: all var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.apply-to-all-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    transform: scale(1.1);
+}
+
+.apply-to-all-btn:active {
+    transform: scale(0.95);
+}
+
 .set-complete {
     width: 44px;
     height: 44px;
@@ -1042,6 +1098,112 @@ body {
 .finish-workout-btn:active {
     transform: translateY(-1px) scale(1);
     box-shadow: var(--shadow-lg);
+}
+
+/* Compact Rest Timer */
+.compact-timer {
+    position: fixed;
+    bottom: 90px; /* Above bottom nav */
+    right: 20px;
+    z-index: 150;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.compact-timer.hidden {
+    display: none;
+}
+
+.compact-timer-content {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(99, 102, 241, 0.4);
+    animation: compactTimerPulse 2s ease-in-out infinite;
+}
+
+.compact-timer-content:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.compact-timer-content:active {
+    transform: scale(0.95);
+}
+
+@keyframes compactTimerPulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(99, 102, 241, 0.2);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.compact-timer-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.compact-timer-bg {
+    fill: none;
+    stroke: rgba(99, 102, 241, 0.2);
+    stroke-width: 2;
+}
+
+.compact-timer-progress {
+    fill: none;
+    stroke: var(--primary-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 100.53;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.1s linear, stroke 0.5s ease;
+}
+
+.compact-timer-progress.warning {
+    stroke: var(--warning-color);
+}
+
+.compact-timer-progress.danger {
+    stroke: var(--error-color);
+}
+
+.compact-timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.compact-timer-text svg {
+    flex-shrink: 0;
 }
 
 /* Rest Timer */
