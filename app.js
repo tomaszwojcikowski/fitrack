@@ -878,7 +878,7 @@ class FiTrackApp {
         } else {
             // Hide home screen sections when workout is in progress
             homeScreenSections.classList.add('hidden');
-            if (exerciseSelection) exerciseSelection.classList.remove('hidden');
+            if (exerciseSelection) exerciseSelection.classList.add('hidden');
             if (currentExercises) currentExercises.classList.remove('hidden');
         }
     }
