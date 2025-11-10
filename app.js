@@ -654,6 +654,25 @@ class FiTrackApp {
             this.startRestTimer(90); // Default 90 seconds
         });
 
+        // Compact timer - click to expand
+        const compactTimer = document.getElementById('compactTimer');
+        if (compactTimer) {
+            compactTimer.addEventListener('click', () => {
+                this.expandRestTimer();
+            });
+        }
+
+        // Full rest timer overlay - click to collapse
+        const restTimer = document.getElementById('restTimer');
+        if (restTimer) {
+            restTimer.addEventListener('click', (e) => {
+                // Only collapse if clicking the overlay, not the content
+                if (e.target === restTimer) {
+                    this.collapseRestTimer();
+                }
+            });
+        }
+
         // Timer controls
         const timerStopElem = document.getElementById('timerStop');
         if (timerStopElem) timerStopElem.addEventListener('click', () => {
@@ -1229,6 +1248,36 @@ class FiTrackApp {
         this.currentWorkout[exerciseIndex].sets[setIndex][field] = value;
     }
 
+    applyWeightToAll(exerciseIndex, setIndex) {
+        const exercise = this.currentWorkout[exerciseIndex];
+        const weight = exercise.sets[setIndex].weight;
+        
+        // Apply to all remaining sets (after this one) that aren't completed
+        for (let i = setIndex + 1; i < exercise.sets.length; i++) {
+            if (!exercise.sets[i].completed) {
+                exercise.sets[i].weight = weight;
+            }
+        }
+        
+        this.updateUI();
+        this.showToast('Weight applied to all remaining sets', 'success');
+    }
+
+    applyRepsToAll(exerciseIndex, setIndex) {
+        const exercise = this.currentWorkout[exerciseIndex];
+        const reps = exercise.sets[setIndex].reps;
+        
+        // Apply to all remaining sets (after this one) that aren't completed
+        for (let i = setIndex + 1; i < exercise.sets.length; i++) {
+            if (!exercise.sets[i].completed) {
+                exercise.sets[i].reps = reps;
+            }
+        }
+        
+        this.updateUI();
+        this.showToast('Reps applied to all remaining sets', 'success');
+    }
+
     toggleSetComplete(exerciseIndex, setIndex) {
         const exercise = this.currentWorkout[exerciseIndex];
         const set = exercise.sets[setIndex];
@@ -1621,8 +1670,13 @@ class FiTrackApp {
     // Rest Timer
     startRestTimer(seconds) {
         this.restTimerSeconds = seconds;
-        const restTimer = document.getElementById('restTimer');
-        restTimer.classList.remove('hidden');
+        this.restTimerTotalSeconds = seconds; // Store initial value for progress calculation
+        
+        // Show compact timer, not full screen
+        const compactTimer = document.getElementById('compactTimer');
+        if (compactTimer) {
+            compactTimer.classList.remove('hidden');
+        }
         
         this.updateTimerDisplay();
         
@@ -1647,7 +1701,29 @@ class FiTrackApp {
             clearInterval(this.restTimerInterval);
             this.restTimerInterval = null;
         }
-        document.getElementById('restTimer').classList.add('hidden');
+        const compactTimer = document.getElementById('compactTimer');
+        const restTimer = document.getElementById('restTimer');
+        if (compactTimer) compactTimer.classList.add('hidden');
+        if (restTimer) restTimer.classList.add('hidden');
+    }
+
+    expandRestTimer() {
+        // Show full screen timer
+        const restTimer = document.getElementById('restTimer');
+        const compactTimer = document.getElementById('compactTimer');
+        if (restTimer) restTimer.classList.remove('hidden');
+        // Keep compact timer hidden while full screen is shown
+        if (compactTimer) compactTimer.classList.add('hidden');
+    }
+
+    collapseRestTimer() {
+        // Hide full screen timer and show compact timer
+        const restTimer = document.getElementById('restTimer');
+        const compactTimer = document.getElementById('compactTimer');
+        if (restTimer) restTimer.classList.add('hidden');
+        if (this.restTimerInterval && compactTimer) {
+            compactTimer.classList.remove('hidden');
+        }
     }
 
     addRestTime(seconds) {
@@ -1659,12 +1735,25 @@ class FiTrackApp {
         const minutes = Math.floor(this.restTimerSeconds / 60);
         const seconds = this.restTimerSeconds % 60;
         const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const compactDisplay = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}s`;
         
-        document.getElementById('timerDisplay').textContent = display;
+        // Update full timer display
+        const timerDisplay = document.getElementById('timerDisplay');
+        if (timerDisplay) {
+            timerDisplay.textContent = display;
+        }
         
-        // Update progress circle
-        const totalSeconds = 90; // Default timer length for calculation
+        // Update compact timer display
+        const compactTimerDisplay = document.getElementById('compactTimerDisplay');
+        if (compactTimerDisplay) {
+            compactTimerDisplay.textContent = compactDisplay;
+        }
+        
+        // Update progress circles
+        const totalSeconds = this.restTimerTotalSeconds || 90; // Use initial timer value for accurate progress
         const progress = this.restTimerSeconds / totalSeconds;
+        
+        // Update full timer progress circle
         const circumference = 2 * Math.PI * 45; // radius is 45
         const offset = circumference * (1 - progress);
         
@@ -1678,6 +1767,24 @@ class FiTrackApp {
                 progressElement.classList.add('danger');
             } else if (this.restTimerSeconds <= 30) {
                 progressElement.classList.add('warning');
+            }
+        }
+        
+        // Update compact timer progress circle
+        const compactCircumference = 2 * Math.PI * 16; // radius is 16
+        const compactOffset = compactCircumference * (1 - progress);
+        
+        const compactProgressElement = document.querySelector('.compact-timer-progress');
+        if (compactProgressElement) {
+            compactProgressElement.style.strokeDasharray = compactCircumference;
+            compactProgressElement.style.strokeDashoffset = compactOffset;
+            
+            // Color transitions based on remaining time
+            compactProgressElement.classList.remove('warning', 'danger');
+            if (this.restTimerSeconds <= 10) {
+                compactProgressElement.classList.add('danger');
+            } else if (this.restTimerSeconds <= 30) {
+                compactProgressElement.classList.add('warning');
             }
         }
     }

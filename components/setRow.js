@@ -5,15 +5,25 @@
  * @param {Object} set - The set data
  * @param {number} exIndex - Exercise index in workout
  * @param {number} setIndex - Set index in exercise
+ * @param {boolean} isNextIncomplete - Whether this is the next incomplete set
  * @returns {string} HTML string for the set row
  */
-export function renderSetRow(set, exIndex, setIndex) {
+export function renderSetRow(set, exIndex, setIndex, isNextIncomplete = false) {
     return `
-        <div class="set-row-wrapper" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
+        <div class="set-row-wrapper ${isNextIncomplete ? 'next-set' : ''}" data-exercise-index="${exIndex}" data-set-index="${setIndex}">
             <div class="set-row">
                 <div class="set-number">${setIndex + 1}</div>
                 <div class="set-input">
-                    <label>Weight (kg)</label>
+                    <label>
+                        Weight (kg)
+                        ${set.weight && !set.completed ? `<button class="apply-to-all-btn" onclick="app.applyWeightToAll(${exIndex}, ${setIndex})" title="Apply to all remaining sets" aria-label="Apply weight to all remaining sets">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="7 17 2 12 7 7"></polyline>
+                                <polyline points="12 17 7 12 12 7"></polyline>
+                                <line x1="12" y1="12" x2="22" y2="12"></line>
+                            </svg>
+                        </button>` : ''}
+                    </label>
                     <input type="number" 
                         value="${set.weight}" 
                         placeholder="0"
@@ -27,6 +37,13 @@ export function renderSetRow(set, exIndex, setIndex) {
                 <div class="set-input">
                     <label>
                         ${set.useTime ? 'Time' : 'Reps'}
+                        ${!set.useTime && set.reps && !set.completed ? `<button class="apply-to-all-btn" onclick="app.applyRepsToAll(${exIndex}, ${setIndex})" title="Apply to all remaining sets" aria-label="Apply reps to all remaining sets">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="7 17 2 12 7 7"></polyline>
+                                <polyline points="12 17 7 12 12 7"></polyline>
+                                <line x1="12" y1="12" x2="22" y2="12"></line>
+                            </svg>
+                        </button>` : ''}
                         <button class="toggle-type-btn" onclick="app.toggleSetInputType(${exIndex}, ${setIndex})" title="Toggle between reps and time" aria-label="Switch to ${set.useTime ? 'reps' : 'time'} tracking">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <polyline points="17 1 21 5 17 9"></polyline>
@@ -68,7 +85,7 @@ export function renderSetRow(set, exIndex, setIndex) {
                         aria-label="Delete set ${setIndex + 1}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 4 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                     </button>
                 </div>

@@ -16,6 +16,9 @@ export function renderExerciseCard(exercise, exIndex) {
     const totalSets = exercise.sets.length;
     const allCompleted = completedSets === totalSets && totalSets > 0;
     
+    // Find the next incomplete set
+    const nextIncompleteIndex = exercise.sets.findIndex(set => !set.completed);
+    
     return `
         <div class="exercise-card ${allCompleted ? 'completed' : ''}" draggable="true" data-exercise-index="${exIndex}">
             <div class="exercise-header">
@@ -56,7 +59,7 @@ export function renderExerciseCard(exercise, exIndex) {
                 </div>
             </div>
             <div class="sets-list">
-                ${exercise.sets.map((set, setIndex) => renderSetRow(set, exIndex, setIndex)).join('')}
+                ${exercise.sets.map((set, setIndex) => renderSetRow(set, exIndex, setIndex, setIndex === nextIncompleteIndex)).join('')}
             </div>
             <button class="add-set-btn" onclick="app.addSet(${exIndex})">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
